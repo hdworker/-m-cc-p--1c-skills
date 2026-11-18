@@ -7,8 +7,9 @@
   * source — `.dsh/skills` (dsh) или `.opencode/skills` (opencode) рядом с репозиторием;
   * dest   — `%USERPROFILE%\\.dsh\\skills` (dsh) или `%USERPROFILE%\\.config\\opencode\\skills`.
 
-Текущий каталог не удаляется: переименовывается в `<dest>.bak-<метка времени>`.
-После копирования сверяет число файлов и печатает манифест платформы.
+Текущий каталог не удаляется: переименовывается в `<dest>.bak-<метка времени>`; если каталог
+держит наблюдатель скиллов и переименование недоступно — сохраняется копия, затем содержимое
+очищается. После копирования сверяет число файлов и печатает манифест платформы.
 """
 
 import argparse
@@ -37,6 +38,15 @@ def count_files(root):
     return total
 
 
+def clear_dir(path):
+    for name in os.listdir(path):
+        item = os.path.join(path, name)
+        if os.path.isdir(item):
+            shutil.rmtree(item)
+        else:
+            os.remove(item)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--target", required=True, choices=["dsh", "opencode"])
@@ -58,9 +68,16 @@ def main():
     stamp = time.strftime("%Y%m%d-%H%M%S")
     if os.path.isdir(dest):
         backup = "%s.bak-%s" % (dest, stamp)
-        os.rename(dest, backup)
-        print("старый каталог: " + backup)
-    shutil.copytree(src, dest, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+        try:
+            os.rename(dest, backup)
+            print("старый каталог: " + backup)
+        except OSError:
+            # каталог держит наблюдатель скиллов: сохраняем копию и чистим содержимое
+            shutil.copytree(dest, backup, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+            clear_dir(dest)
+            print("старый каталог скопирован: %s (переименование недоступно)" % backup)
+    shutil.copytree(src, dest, dirs_exist_ok=True,
+                    ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
 
     src_n, dst_n = count_files(src), count_files(dest)
     print("файлов: источник %d, установлено %d" % (src_n, dst_n))

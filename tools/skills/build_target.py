@@ -8,6 +8,7 @@
   * заголовок "# /skill — ..." -> "# skill — ...";
   * пути `.opencode/skills/...` -> `$env:USERPROFILE\\.dsh\\skills\\...`;
   * строки использования "/skill args" -> вызов python-скрипта скилла;
+  * ссылки `/<skill>` -> `<skill>`;
   * раздел "Запуск через MCP (cc)" -> раздел про нативные фоновые задания DSH;
   * копирует scripts/ и reference/ как есть (без __pycache__/*.pyc);
   * пишет манифест .cc-1c-skills.json с platform=dsh.
@@ -85,7 +86,7 @@ def convert_body(skill, body):
 
     # ссылки в тексте `\/skill` -> `skill`
     body = re.sub(r"`/([a-z0-9][a-z0-9-]*)`", r"`\1`", body)
-    body = body.replace("sfx/", "sfx/")
+    body = re.sub(r"`/([a-z0-9][a-z0-9-]*)\b", r"`\1", body)
 
     # раздел про MCP cc заменяем на нативный запуск DSH
     idx = body.find("## Запуск через MCP")

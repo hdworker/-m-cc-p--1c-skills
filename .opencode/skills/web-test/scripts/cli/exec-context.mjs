@@ -1,11 +1,9 @@
-// web-test cli/exec-context v1.5 — buildContext + executeScript для run/exec/test
+// web-test cli/exec-context v1.3 — buildContext + executeScript для run/exec/test
 // Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 import { readFileSync, writeFileSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import * as browser from '../browser.mjs';
-import { resetSlideRun } from '../engine/recording/slides/index.mjs';
-import { anchorLocator } from '../engine/recording/anchors.mjs';
 import { elapsed, slugify, withDeadline, softDeadline, DeadlineError } from './util.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -65,18 +63,8 @@ export function buildContext({ noRecord = false } = {}) {
     for (const fn of ['showCaption', 'hideCaption']) {
       ctx[fn] = noop;
     }
-    // no voice, but the words are checked as in the recording (a wrong anchor must not wait for the real run)
-    ctx.speak = async (text) => {
-      if (typeof text !== 'string' || !text.trim()) throw new Error('speak: the phrase to say (a non-empty string)');
-      const next = anchorLocator(text);
-      let n = 0;
-      return { seconds: 0, at: async (x) => { next(x, `speak at ${++n}`); return { t: 0, by: 'estimate', late: 0 }; } };
-    };
     ctx.isRecording = () => false;
     ctx.getCaptions = () => [];
-    // slides are still drawn (the page state matters for debugging), without TTS and with short holds
-    ctx.showSlide = (spec, opts = {}) => browser.showSlide(spec, { ...opts, fast: 0.3 });
-    ctx.prepareSlides = (specs, opts = {}) => browser.prepareSlides(specs, { ...opts, validateOnly: true });
   }
 
   // Wrap action functions to auto-detect 1C errors (modal, balloon)
@@ -128,7 +116,6 @@ export async function executeScript(code, { noRecord, timeoutMs } = {}) {
 
   const t0 = Date.now();
   try {
-    resetSlideRun();   // slide numbers (theme.frame) start over with every script
     const ctx = buildContext({ noRecord });
 
     // Normalize Windows backslash paths to prevent JS parse errors

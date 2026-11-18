@@ -1,5 +1,23 @@
 #!/usr/bin/env python3
-# db-run v1.18 — Launch 1C:Enterprise
+# --- cc-async auto ---
+import os as _cc_os, sys as _cc_sys
+if (_cc_os.path.basename(_cc_os.path.abspath(__file__)) == _cc_os.path.basename(_cc_sys.argv[0] or "")
+        and not _cc_os.environ.get("CC_SYNC")
+        and not (set(_cc_sys.argv[1:]) & {"-h", "--help", "-V", "--version", "-PrintOnly"})):
+    _cc_shared = _cc_os.path.join(_cc_os.path.dirname(_cc_os.path.dirname(_cc_os.path.dirname(
+        _cc_os.path.abspath(__file__)))), "_shared", "async_run.py")
+    if _cc_os.path.isfile(_cc_shared):
+        import subprocess as _cc_sp
+        _cc_env = dict(_cc_os.environ)
+        _cc_env["CC_SYNC"] = "1"
+        _cc_r = _cc_sp.run([_cc_sys.executable, _cc_shared, "start", "--",
+                            _cc_sys.executable, "-u", _cc_os.path.abspath(__file__)] + _cc_sys.argv[1:],
+                           capture_output=True, text=True, timeout=60, env=_cc_env)
+        _cc_sys.stdout.write(_cc_r.stdout or "")
+        _cc_sys.stderr.write(_cc_r.stderr or "")
+        _cc_sys.exit(0)
+# --- end cc-async ---
+# db-run v1.16 — Launch 1C:Enterprise
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 
 import argparse
@@ -193,9 +211,6 @@ def project_extra_args(name):
                     data = json.load(f)
                 v = data.get(name)
                 if v:
-                    # Строка вместо массива — один аргумент, как у PS (@($x)), а не список символов
-                    if not isinstance(v, list):
-                        v = [v]
                     return [str(x) for x in v]
             except Exception:
                 pass
@@ -385,39 +400,10 @@ def resolve_v8path(v8path, args):
 def _redact(text, *secrets):
     """Redact literal secret values (password, user) from a display string —
     precise, never touches lookalike paths."""
-    # A secret with a quote reaches the command line doubled (quote_text), so both forms
-    # are redacted. Longest first: a shorter form replaced earlier could break a longer one
-    # that contains it and leave part of that secret visible.
-    forms = {f for s in secrets if s for f in (str(s), str(s).replace('"', '""'))}
-    for f in sorted(forms, key=len, reverse=True):
-        text = text.replace(f, "***")
+    for s in secrets:
+        if s:
+            text = text.replace(s, "***")
     return text
-
-
-def quote_if_needed(token):
-    """Extra arguments come from the caller unquoted; the 1cv8 command line is joined
-    verbatim, so a token with a space needs quotes of its own."""
-    if token and (" " in token or "\t" in token) and '"' not in token:
-        return f'"{token}"'
-    return token
-
-
-def quote_text(value):
-    """Free text (user, password, comment, label, list name) framed in quotes for the 1cv8
-    command line. A lone quote inside the value ends it, and the rest is dropped silently
-    (замер 2026-11-14: «-comment» хранилища сохраняется до кавычки, exit 0); 1C reads a
-    doubled quote as one, «\\"» не понимает. On POSIX too: 1cv8 parses quotes inside each
-    argv element the same way (замер на darwin, 8.3.27), so the quote is doubled on every OS;
-    there run_v8 strips only the framing pair and leaves the doubled quote inside."""
-    value = str(value)    # a registry value may be a JSON number
-    return '"%s"' % value.replace('"', '""')
-
-
-def v8_value(value):
-    """A value for the 1cv8 command line. On Windows the line is joined here verbatim (see
-    main), so the value is framed; on POSIX it goes as its own argv element, unframed. A quote
-    inside is doubled on both: 1cv8 parses quotes inside an argv element too."""
-    return quote_text(value) if os.name == "nt" else str(value).replace('"', '""')
 
 
 def main():
@@ -474,14 +460,14 @@ def main():
     arguments = ["ENTERPRISE"]
 
     if args.InfoBaseServer and args.InfoBaseRef:
-        arguments.extend(["/S", v8_value(f"{args.InfoBaseServer}/{args.InfoBaseRef}")])
+        arguments.extend(["/S", f"{args.InfoBaseServer}/{args.InfoBaseRef}"])
     else:
-        arguments.extend(["/F", v8_value(args.InfoBasePath)])
+        arguments.extend(["/F", args.InfoBasePath])
 
     if args.UserName:
-        arguments.append("/N" + v8_value(args.UserName))
+        arguments.append(f"/N{args.UserName}")
     if args.Password:
-        arguments.append("/P" + v8_value(args.Password))
+        arguments.append(f"/P{args.Password}")
 
     # --- Optional params ---
     execute = args.Execute
@@ -494,26 +480,19 @@ def main():
             execute = ""
 
     if execute:
-        arguments.extend(["/Execute", v8_value(execute)])
+        arguments.extend(["/Execute", execute])
     if args.CParam:
-        # Параметр запуска — свободный текст (часто JSON): кавычка внутри удваивается, иначе
-        # Предприятие молча обрезает его на ней (замер 2026-11-14).
-        arguments.extend(["/C", v8_value(args.CParam)])
+        arguments.extend(["/C", args.CParam])
     if args.URL:
-        arguments.extend(["/URL", v8_value(args.URL)])
+        arguments.extend(["/URL", args.URL])
 
     arguments.append("/DisableStartupDialogs")
-    arguments.extend(quote_if_needed(a) if os.name == "nt" else a for a in extra_args)
+    arguments.extend(extra_args)
 
     # --- Execute (background) ---
     # Redact the password/user before printing the command line — never leak secrets.
     print(f"Running: 1cv8.exe {_redact(' '.join(format_args_for_display(arguments, engine)), args.Password, args.UserName)}")
-    # On Windows list2cmdline would turn a quote inside a value into «\\"», which 1cv8 does not
-    # read (замер 2026-11-14) — the command line is handed over ready-made, as in run_v8.
-    if os.name == "nt":
-        proc = subprocess.Popen('"' + v8path + '" ' + " ".join(arguments))
-    else:
-        proc = subprocess.Popen([v8path] + arguments)
+    proc = subprocess.Popen([v8path] + arguments)
 
     # --- Bounded early-exit check ---
     # The launch is a background GUI process, so we don't wait for completion. But a process

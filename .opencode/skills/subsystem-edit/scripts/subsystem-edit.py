@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# subsystem-edit v1.30 — Edit existing 1C subsystem XML (+тип Bot; cfe-diff/cfe-borrow: недостающие типы)
+# subsystem-edit v1.29 — Edit existing 1C subsystem XML (+тип Bot; cfe-diff/cfe-borrow: недостающие типы)
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 
 import argparse
@@ -483,19 +483,14 @@ CONTENT_TYPE_MAP = {
 }
 
 
-CONTENT_TYPE_MAP_CI = {k.lower(): v for k, v in CONTENT_TYPE_MAP.items()}
-
-
 def normalize_content_ref(ref):
     if not ref or '.' not in ref:
         return ref
     dot_idx = ref.index('.')
     type_part = ref[:dot_idx]
     name_part = ref[dot_idx + 1:]
-    # Хеш-таблица PS ищет ключ без учёта регистра.
-    mapped = CONTENT_TYPE_MAP_CI.get(type_part.lower())
-    if mapped:
-        type_part = mapped
+    if type_part in CONTENT_TYPE_MAP:
+        type_part = CONTENT_TYPE_MAP[type_part]
     return f'{type_part}.{name_part}'
 
 
@@ -745,11 +740,10 @@ def main():
             print("No <Content> element found", file=sys.stderr)
             sys.exit(1)
 
-        # Сравнения состава и дочерних — без учёта регистра, как -in/-eq в PS.
         existing = set()
         for child in content_el:
             if isinstance(child.tag, str) and localname(child) == "Item":
-                existing.add((child.text or "").strip().lower())
+                existing.add((child.text or "").strip())
 
         props_indent = get_child_indent(props_el)
         if len(content_el) == 0 and not (content_el.text and content_el.text.strip()):
@@ -760,7 +754,7 @@ def main():
             item = normalize_content_ref(raw_item)
             if item != raw_item:
                 print(f'[NORM] Content: {raw_item} -> {item}')
-            if item.lower() in existing:
+            if item in existing:
                 warn(f"Content already contains: {item}")
                 continue
             frag_xml = f'<xr:Item xsi:type="xr:MDObjectRef">{item}</xr:Item>'
@@ -784,7 +778,7 @@ def main():
         for item in items:
             found = False
             for child in list(content_el):
-                if isinstance(child.tag, str) and localname(child) == "Item" and (child.text or "").strip().lower() == item.lower():
+                if isinstance(child.tag, str) and localname(child) == "Item" and (child.text or "").strip() == item:
                     remove_with_indent(child)
                     remove_count += 1
                     info(f"Removed content: {item}")
@@ -800,7 +794,7 @@ def main():
             sys.exit(1)
 
         for child in child_objs_el:
-            if isinstance(child.tag, str) and localname(child) == "Subsystem" and (child.text or "").strip().lower() == child_name.lower():
+            if isinstance(child.tag, str) and localname(child) == "Subsystem" and (child.text or "").strip() == child_name:
                 warn(f"ChildObjects already contains: {child_name}")
                 return
 
@@ -838,7 +832,7 @@ def main():
 
         found = False
         for child in list(child_objs_el):
-            if isinstance(child.tag, str) and localname(child) == "Subsystem" and (child.text or "").strip().lower() == child_name.lower():
+            if isinstance(child.tag, str) and localname(child) == "Subsystem" and (child.text or "").strip() == child_name:
                 remove_with_indent(child)
                 remove_count += 1
                 info(f"Removed child subsystem: {child_name}")
@@ -852,23 +846,19 @@ def main():
         prop_def = ci_json(parse_json_input(
             json_val, "-Value for operation 'set-property'", "a JSON object {name, value}", inline=True))
         prop_name = str(prop_def["name"])
-        # null — пустое значение, как "$($propDef.value)" в PS.
-        raw_value = prop_def.get("value")
-        prop_value = "" if raw_value is None else str(raw_value)
-        # PS сравнивает имя свойства через -eq/-in, а они регистронезависимы.
-        prop_key = prop_name.lower()
+        prop_value = str(prop_def.get("value", ""))
 
         prop_el = None
         for child in props_el:
-            if isinstance(child.tag, str) and localname(child).lower() == prop_key:
+            if isinstance(child.tag, str) and localname(child) == prop_name:
                 prop_el = child
                 break
         if prop_el is None:
             print(f"Property '{prop_name}' not found in Properties", file=sys.stderr)
             sys.exit(1)
 
-        bool_props = ["includeincommandinterface", "useonecommand", "includehelpincontents"]
-        if prop_key in bool_props:
+        bool_props = ["IncludeInCommandInterface", "UseOneCommand", "IncludeHelpInContents"]
+        if prop_name in bool_props:
             prop_el.text = prop_value.lower()
             # Clear children
             for ch in list(prop_el):
@@ -877,8 +867,8 @@ def main():
             info(f"Set {prop_name} = {prop_value}")
             return
 
-        ml_props = ["synonym", "explanation"]
-        if prop_key in ml_props:
+        ml_props = ["Synonym", "Explanation"]
+        if prop_name in ml_props:
             if not prop_value:
                 # Clear - make self-closing
                 for ch in list(prop_el):

@@ -1,4 +1,22 @@
 #!/usr/bin/env python3
+# --- cc-async auto ---
+import os as _cc_os, sys as _cc_sys
+if (_cc_os.path.basename(_cc_os.path.abspath(__file__)) == _cc_os.path.basename(_cc_sys.argv[0] or "")
+        and not _cc_os.environ.get("CC_SYNC")
+        and not (set(_cc_sys.argv[1:]) & {"-h", "--help", "-V", "--version", "-PrintOnly"})):
+    _cc_shared = _cc_os.path.join(_cc_os.path.dirname(_cc_os.path.dirname(_cc_os.path.dirname(
+        _cc_os.path.abspath(__file__)))), "_shared", "async_run.py")
+    if _cc_os.path.isfile(_cc_shared):
+        import subprocess as _cc_sp
+        _cc_env = dict(_cc_os.environ)
+        _cc_env["CC_SYNC"] = "1"
+        _cc_r = _cc_sp.run([_cc_sys.executable, _cc_shared, "start", "--",
+                            _cc_sys.executable, "-u", _cc_os.path.abspath(__file__)] + _cc_sys.argv[1:],
+                           capture_output=True, text=True, timeout=60, env=_cc_env)
+        _cc_sys.stdout.write(_cc_r.stdout or "")
+        _cc_sys.stderr.write(_cc_r.stderr or "")
+        _cc_sys.exit(0)
+# --- end cc-async ---
 # web-publish v1.17 — Publish 1C infobase via Apache (+_version_dir/_version_key: общий эталон db-семейства)
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 

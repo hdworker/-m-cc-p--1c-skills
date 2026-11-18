@@ -1,5 +1,23 @@
 #!/usr/bin/env python3
-# db-cfe-admin v1.11 — Configuration extensions in a 1C infobase: list, check, properties, delete
+# --- cc-async auto ---
+import os as _cc_os, sys as _cc_sys
+if (_cc_os.path.basename(_cc_os.path.abspath(__file__)) == _cc_os.path.basename(_cc_sys.argv[0] or "")
+        and not _cc_os.environ.get("CC_SYNC")
+        and not (set(_cc_sys.argv[1:]) & {"-h", "--help", "-V", "--version", "-PrintOnly"})):
+    _cc_shared = _cc_os.path.join(_cc_os.path.dirname(_cc_os.path.dirname(_cc_os.path.dirname(
+        _cc_os.path.abspath(__file__)))), "_shared", "async_run.py")
+    if _cc_os.path.isfile(_cc_shared):
+        import subprocess as _cc_sp
+        _cc_env = dict(_cc_os.environ)
+        _cc_env["CC_SYNC"] = "1"
+        _cc_r = _cc_sp.run([_cc_sys.executable, _cc_shared, "start", "--",
+                            _cc_sys.executable, "-u", _cc_os.path.abspath(__file__)] + _cc_sys.argv[1:],
+                           capture_output=True, text=True, timeout=60, env=_cc_env)
+        _cc_sys.stdout.write(_cc_r.stdout or "")
+        _cc_sys.stderr.write(_cc_r.stderr or "")
+        _cc_sys.exit(0)
+# --- end cc-async ---
+# db-cfe-admin v1.8 — Configuration extensions in a 1C infobase: list, check, properties, delete
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 
 import argparse
@@ -208,9 +226,9 @@ def repository_args(repo):
         return a
     a.append('/ConfigurationRepositoryF"%s"' % repo["path"])
     if repo.get("user"):
-        a.append('/ConfigurationRepositoryN' + quote_text(repo["user"]))
+        a.append('/ConfigurationRepositoryN"%s"' % repo["user"])
     if repo.get("password"):
-        a.append('/ConfigurationRepositoryP' + quote_text(repo["password"]))
+        a.append('/ConfigurationRepositoryP"%s"' % repo["password"])
     return a
 
 
@@ -238,9 +256,6 @@ def project_extra_args(name):
                     data = json.load(f)
                 v = data.get(name)
                 if v:
-                    # Строка вместо массива — один аргумент, как у PS (@($x)), а не список символов
-                    if not isinstance(v, list):
-                        v = [v]
                     return [str(x) for x in v]
             except Exception:
                 pass
@@ -510,17 +525,6 @@ def quote_if_needed(token):
     return token
 
 
-def quote_text(value):
-    """Free text (user, password, comment, label, list name) framed in quotes for the 1cv8
-    command line. A lone quote inside the value ends it, and the rest is dropped silently
-    (замер 2026-11-14: «-comment» хранилища сохраняется до кавычки, exit 0); 1C reads a
-    doubled quote as one, «\\"» не понимает. On POSIX too: 1cv8 parses quotes inside each
-    argv element the same way (замер на darwin, 8.3.27), so the quote is doubled on every OS;
-    there run_v8 strips only the framing pair and leaves the doubled quote inside."""
-    value = str(value)    # a registry value may be a JSON number
-    return '"%s"' % value.replace('"', '""')
-
-
 def run_v8(v8path, arguments):
     """Run 1cv8 in batch mode and capture its console output.
 
@@ -615,12 +619,9 @@ def describe_exit(code):
 def _redact(text, *secrets):
     """Redact literal secret values (password, user) from a display string —
     precise, never touches lookalike paths."""
-    # A secret with a quote reaches the command line doubled (quote_text), so both forms
-    # are redacted. Longest first: a shorter form replaced earlier could break a longer one
-    # that contains it and leave part of that secret visible.
-    forms = {f for s in secrets if s for f in (str(s), str(s).replace('"', '""'))}
-    for f in sorted(forms, key=len, reverse=True):
-        text = text.replace(f, "***")
+    for s in secrets:
+        if s:
+            text = text.replace(s, "***")
     return text
 
 
@@ -870,15 +871,15 @@ def main():
             else:
                 arguments += ["/F", '"%s"' % args.InfoBasePath]
             if args.UserName:
-                arguments.append('/N' + quote_text(args.UserName))
+                arguments.append('/N"%s"' % args.UserName)
             if args.Password:
-                arguments.append('/P' + quote_text(args.Password))
+                arguments.append('/P"%s"' % args.Password)
             # База под хранилищем не примет НИ ОДНОЙ операции конфигуратора без этих реквизитов.
             arguments += repository_args(repo)
             arguments += op_args
             out_file = os.path.join(temp_dir, "out.txt")
             arguments += ["/Out", '"%s"' % out_file, "/DisableStartupDialogs"]
-            arguments += [quote_if_needed(a) for a in v8_extra_args]
+            arguments += v8_extra_args
             print("Running: 1cv8.exe " + _redact(" ".join(format_args_for_display(arguments, "1cv8")),
                                                  args.Password, args.UserName, repo.get("password")))
             r = run_v8(v8_exe, arguments)

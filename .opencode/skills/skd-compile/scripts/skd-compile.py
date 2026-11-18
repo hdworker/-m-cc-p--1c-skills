@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# skd-compile v1.146 — Compile 1C DCS from JSON
+# skd-compile v1.142 — Compile 1C DCS from JSON
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 import argparse
 import json
@@ -9,42 +9,6 @@ import sys
 import uuid
 
 from lxml import etree
-
-# --- Булевы флаги DSL: прощающий ввод ---
-# Флаг строкой или числом — однозначная ошибка автора JSON: true|да|истина|1 / false|нет|ложь|0 (без
-# регистра; 1/0 — и числом) приводим к bool молча. Иное — ошибка без записи: молчаливое «false» из «yes»
-# хуже отказа. Без общего читателя порты расходились: PS (-eq) принимал "false", py (is) — нет.
-def to_dsl_bool(value, key, default):
-    if value is None:
-        return default
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        t = value.strip().lower()
-        if t in ('true', 'да', 'истина', '1'):
-            return True
-        if t in ('false', 'нет', 'ложь', '0'):
-            return False
-    elif isinstance(value, (int, float)):
-        if value == 1:
-            return True
-        if value == 0:
-            return False
-    shown = f'"{value}"' if isinstance(value, str) else f"{value}"
-    print(f"[ERROR] {key} = {shown}: expected true or false", file=sys.stderr)
-    sys.exit(1)
-
-
-def get_dsl_bool(obj, keys, default):
-    """Первый найденный ключ из keys (синонимы, без регистра) → to_dsl_bool; не dict / нет ключа → default."""
-    if not isinstance(obj, dict):
-        return default
-    for k in keys:
-        for actual in obj:
-            if isinstance(actual, str) and actual.lower() == k.lower():
-                return to_dsl_bool(obj[actual], k, default)
-    return default
-
 
 # Регистронезависимый ввод — паритет с PS1: в PowerShell имена параметров и [ValidateSet]
 # регистр не различают, в argparse совпадение точное.
@@ -1137,7 +1101,7 @@ def emit_input_parameters(lines, ip, indent):
     lines.append(f'{indent}<inputParameters>')
     for item in items:
         lines.append(f'{indent}\t<dcscor:item>')
-        if 'use' in item and not get_dsl_bool(item, ['use'], True):
+        if 'use' in item and item['use'] is False:
             lines.append(f'{indent}\t\t<dcscor:use>false</dcscor:use>')
         lines.append(f'{indent}\t\t<dcscor:parameter>{esc_xml_text(str(item.get("parameter", "")))}</dcscor:parameter>')
         if 'choiceParameters' in item:
@@ -1290,10 +1254,22 @@ def get_calc_restrict(cf):
     return get_object_restrict(cf)
 
 
+def _ps_eq_bool(val, target):
+    """PowerShell `$x -eq $true/$false`: сравнение задаёт левый операнд — строка как текст
+    без учёта регистра, число как число (1/0), прочее не равно."""
+    if isinstance(val, bool):
+        return val is target
+    if isinstance(val, str):
+        return val.lower() == ('true' if target else 'false')
+    if isinstance(val, (int, float)):
+        return val == (1 if target else 0)
+    return False
+
+
 def get_restrict_flag_names(restrict):
     obj = restrict['obj']
     if obj is not None:
-        return [str(xml_name) for xml_name, flag in obj.items() if to_dsl_bool(flag, str(xml_name), False)]
+        return [str(xml_name) for xml_name, flag in obj.items() if _ps_eq_bool(flag, True)]
     return resolve_restrict_flags(restrict['tokens'])
 
 
@@ -1390,7 +1366,7 @@ def emit_field(lines, field_def, indent):
         if field_def.get('inputParameters') is not None:
             f['inputParameters'] = field_def['inputParameters']
         # folder: true → DataSetFieldFolder
-        if get_dsl_bool(field_def, ['folder'], False):
+        if field_def.get('folder') is True:
             f['folder'] = True
 
     # DataSetFieldFolder — только dataPath + title
@@ -1452,7 +1428,7 @@ def emit_field(lines, field_def, indent):
         for oe in oe_list:
             expr = str(oe.get('expression', ''))
             o_type = str(oe.get('orderType', 'Asc'))
-            auto = get_dsl_bool(oe, ['autoOrder'], False)
+            auto = oe.get('autoOrder', False)
             auto_str = 'true' if auto else 'false'
             lines.append(f'{indent}\t<orderExpression>')
             lines.append(f'{indent}\t\t<dcscom:expression>{esc_xml_text(expr)}</dcscom:expression>')
@@ -1520,9 +1496,9 @@ def emit_data_set(lines, ds, indent, default_source, tag_name='dataSet'):
     if ds_type == 'DataSetQuery':
         query_text = resolve_text_from_file(str(ds.get("query", "")), query_base_dir)
         lines.append(f'{indent}\t<query>{esc_xml_text(query_text)}</query>')
-        if (not get_dsl_bool(ds, ['autoFillFields'], True)):
+        if ds.get('autoFillFields') is False:
             lines.append(f'{indent}\t<autoFillFields>false</autoFillFields>')
-        if (not get_dsl_bool(ds, ['useQueryGroupIfPossible'], True)):
+        if ds.get('useQueryGroupIfPossible') is False:
             lines.append(f'{indent}\t<useQueryGroupIfPossible>false</useQueryGroupIfPossible>')
     elif ds_type == 'DataSetObject':
         lines.append(f'{indent}\t<objectName>{esc_xml_text(str(ds["objectName"]))}</objectName>')
@@ -1812,7 +1788,7 @@ def emit_single_param(lines, p, parsed):
         if is_empty_value(parsed.get('value')):
             if not vla:
                 lines.append('\t\t<value xsi:nil="true"/>')
-    elif get_dsl_bool(parsed, ['nilValue'], False):
+    elif parsed.get('nilValue') is True:
         # Принудительный xsi:nil даже когда тип известен (для bit-perfect round-trip).
         if not vla:
             lines.append('\t\t<value xsi:nil="true"/>')
@@ -1828,14 +1804,14 @@ def emit_single_param(lines, p, parsed):
         emit_param_value(lines, p_type, parsed.get('value'), '\t\t', vla)
 
     # Hidden implies useRestriction=true + availableAsField=false
-    if get_dsl_bool(parsed, ['hidden'], False):
+    if parsed.get('hidden') is True:
         parsed['availableAsField'] = False
         parsed['useRestriction'] = True
 
     # UseRestriction — платформа всегда эмитит этот тег у параметра (true/false)
     ur_emit = (
-        get_dsl_bool(parsed, ['useRestriction'], False)
-        or (p is not None and not isinstance(p, str) and get_dsl_bool(p, ['useRestriction'], False))
+        parsed.get('useRestriction') is True
+        or (p is not None and not isinstance(p, str) and p.get('useRestriction') is True)
     )
     lines.append(f'\t\t<useRestriction>{"true" if ur_emit else "false"}</useRestriction>')
 
@@ -1846,7 +1822,7 @@ def emit_single_param(lines, p, parsed):
         parsed['availableAsField'] = False
 
     # AvailableAsField
-    if (not get_dsl_bool(parsed, ['availableAsField'], True)):
+    if parsed.get('availableAsField') is False:
         lines.append('\t\t<availableAsField>false</availableAsField>')
 
     # ValueListAllowed
@@ -1859,8 +1835,8 @@ def emit_single_param(lines, p, parsed):
             emit_available_value(lines, av, '\t\t', parsed.get('type', ''), True)
 
     # DenyIncompleteValues
-    deny = get_dsl_bool(parsed, ['denyIncompleteValues'], False) or (
-        p is not None and not isinstance(p, str) and get_dsl_bool(p, ['denyIncompleteValues'], False))
+    deny = parsed.get('denyIncompleteValues') is True or (
+        p is not None and not isinstance(p, str) and p.get('denyIncompleteValues') is True)
     if deny:
         lines.append('\t\t<denyIncompleteValues>true</denyIncompleteValues>')
 
@@ -1909,15 +1885,15 @@ def emit_parameters(lines, defn):
             }
             if p.get('expression'):
                 parsed['expression'] = str(p['expression'])
-            if (not get_dsl_bool(p, ['availableAsField'], True)):
+            if p.get('availableAsField') is False:
                 parsed['availableAsField'] = False
-            if get_dsl_bool(p, ['valueListAllowed'], False):
+            if p.get('valueListAllowed') is True:
                 parsed['valueListAllowed'] = True
-            if get_dsl_bool(p, ['hidden'], False):
+            if p.get('hidden') is True:
                 parsed['hidden'] = True
-            if get_dsl_bool(p, ['autoDates'], False):
+            if p.get('autoDates') is True:
                 parsed['autoDates'] = True
-            if get_dsl_bool(p, ['nilValue'], False):
+            if p.get('nilValue') is True:
                 parsed['nilValue'] = True
 
         # @autoDates implies use=Always + denyIncompleteValues=true by default
@@ -2371,7 +2347,7 @@ def emit_group_templates(lines, defn):
 
 def emit_selection_item(lines, item, indent):
     if isinstance(item, str):
-        if item.lower() == 'auto':
+        if item == 'Auto':
             lines.append(f'{indent}<dcsset:item xsi:type="dcsset:SelectedItemAuto"/>')
         else:
             lines.append(f'{indent}<dcsset:item xsi:type="dcsset:SelectedItemField">')
@@ -2379,9 +2355,9 @@ def emit_selection_item(lines, item, indent):
             lines.append(f'{indent}</dcsset:item>')
         return
     # Object form: { auto: true, use: false } — отключённый Auto в selection
-    if get_dsl_bool(item, ['auto'], False):
+    if item.get('auto') is True:
         lines.append(f'{indent}<dcsset:item xsi:type="dcsset:SelectedItemAuto">')
-        if (not get_dsl_bool(item, ['use'], True)):
+        if item.get('use') is False:
             lines.append(f'{indent}\t<dcsset:use>false</dcsset:use>')
         lines.append(f'{indent}</dcsset:item>')
         return
@@ -2398,7 +2374,7 @@ def emit_selection_item(lines, item, indent):
         return
     # field with optional title / use=false / viewMode
     lines.append(f'{indent}<dcsset:item xsi:type="dcsset:SelectedItemField">')
-    if (not get_dsl_bool(item, ['use'], True)):
+    if item.get('use') is False:
         lines.append(f'{indent}\t<dcsset:use>false</dcsset:use>')
     lines.append(f'{indent}\t<dcsset:field>{esc_xml_text(str(item["field"]))}</dcsset:field>')
     if item.get('title'):
@@ -2438,7 +2414,7 @@ def emit_filter_item(lines, item, indent):
                 if isinstance(sub, str):
                     parsed = parse_filter_shorthand(sub)
                     sub = {'field': parsed['field'], 'op': parsed['op']}
-                    if not get_dsl_bool(parsed, ['use'], True):
+                    if parsed['use'] is False:
                         sub['use'] = False
                     if parsed.get('value') is not None:
                         sub['value'] = parsed['value']
@@ -2464,7 +2440,7 @@ def emit_filter_item(lines, item, indent):
     # FilterItemComparison
     lines.append(f'{indent}<dcsset:item xsi:type="dcsset:FilterItemComparison">')
 
-    if (not get_dsl_bool(item, ['use'], True)):
+    if item.get('use') is False:
         lines.append(f'{indent}\t<dcsset:use>false</dcsset:use>')
 
     lines.append(f'{indent}\t<dcsset:left xsi:type="dcscor:Field">{esc_xml_text(str(item["field"]))}</dcsset:left>')
@@ -2562,7 +2538,7 @@ def emit_filter(lines, items, indent, block_view_mode=None, block_user_setting_i
                 'field': parsed['field'],
                 'op': parsed['op'],
             }
-            if not get_dsl_bool(parsed, ['use'], True):
+            if parsed['use'] is False:
                 filter_obj['use'] = False
             if parsed.get('value') is not None:
                 filter_obj['value'] = parsed['value']
@@ -2619,7 +2595,7 @@ def emit_order(lines, items, indent, skip_auto=False, block_view_mode=None, bloc
             elif re.match(r'(?i)^asc$', d):
                 d = 'Asc'
             lines.append(f'{indent}\t<dcsset:item xsi:type="dcsset:OrderItemField">')
-            if (not get_dsl_bool(item, ['use'], True)):
+            if item.get('use') is False:
                 lines.append(f'{indent}\t\t<dcsset:use>false</dcsset:use>')
             lines.append(f'{indent}\t\t<dcsset:field>{esc_xml_text(str(item["field"]))}</dcsset:field>')
             lines.append(f'{indent}\t\t<dcsset:orderType>{d}</dcsset:orderType>')
@@ -2644,12 +2620,12 @@ def emit_appearance_value(lines, key, val, indent):
     inner_val = val
     nested_items = None
     if is_top_level_line:
-        if (not get_dsl_bool(val, ['use'], True)):
+        if val.get('use') is False:
             use_wrapper = True
         nested_items = val.get('items')
     elif isinstance(val, dict) and 'value' in val:
         inner_val = val['value']
-        if (not get_dsl_bool(val, ['use'], True)):
+        if val.get('use') is False:
             use_wrapper = True
         nested_items = val.get('items')
 
@@ -2722,7 +2698,7 @@ def emit_conditional_appearance(lines, items, indent, block_view_mode=None, bloc
     for ca in (items or []):
         lines.append(f'{indent}\t<dcsset:item>')
 
-        if (not get_dsl_bool(ca, ['use'], True)):
+        if ca.get('use') is False:
             lines.append(f'{indent}\t\t<dcsset:use>false</dcsset:use>')
 
         # Selection
@@ -2804,7 +2780,7 @@ def emit_output_parameters(lines, params, indent):
         wrap_items = None
         if isinstance(val, dict) and 'value' in val:
             wrap_vt = val.get('valueType')
-            if (not get_dsl_bool(val, ['use'], True)): use_false = True
+            if val.get('use') is False: use_false = True
             wrap_items = val.get('items')
             wrap_vm = val.get('viewMode')
             wrap_usid = val.get('userSettingID')
@@ -2856,7 +2832,7 @@ def emit_output_parameters(lines, params, indent):
                             sub_local_name = str(vt['name'])
                         else:
                             sub_vt = str(vt)
-                    if (not get_dsl_bool(sub_wrap, ['use'], True)):
+                    if sub_wrap.get('use') is False:
                         sub_use_false = True
                 lines.append(f'{indent}\t\t<dcscor:item xsi:type="dcsset:SettingsParameterValue">')
                 if sub_use_false:
@@ -2899,7 +2875,7 @@ def emit_data_parameters(lines, items, indent):
             }
             if parsed.get('value') is not None:
                 dp['value'] = parsed['value']
-            if not get_dsl_bool(parsed, ['use'], True):
+            if parsed['use'] is False:
                 dp['use'] = False
             if parsed.get('userSettingID'):
                 dp['userSettingID'] = parsed['userSettingID']
@@ -2908,13 +2884,13 @@ def emit_data_parameters(lines, items, indent):
 
         lines.append(f'{indent}\t<dcscor:item xsi:type="dcsset:SettingsParameterValue">')
 
-        if (not get_dsl_bool(dp, ['use'], True)):
+        if dp.get('use') is False:
             lines.append(f'{indent}\t\t<dcscor:use>false</dcscor:use>')
 
         lines.append(f'{indent}\t\t<dcscor:parameter>{esc_xml_text(str(dp["parameter"]))}</dcscor:parameter>')
 
         # Value
-        if get_dsl_bool(dp, ['nilValue'], False):
+        if dp.get('nilValue') is True:
             lines.append(f'{indent}\t\t<dcscor:value xsi:nil="true"/>')
         elif not is_data_param_list(dp.get('value')) and is_empty_value(dp.get('value')):
             emit_empty_value(lines, str(dp.get('valueType') or ''), f'{indent}\t\t', 'dcscor:', False)
@@ -3149,7 +3125,7 @@ def emit_structure_item(lines, item, indent, short_group=False):
         else:
             lines.append(f'{indent}<dcsset:item xsi:type="dcsset:StructureItemGroup">')
 
-        if (not get_dsl_bool(item, ['use'], True)):
+        if item.get('use') is False:
             lines.append(f'{indent}\t<dcsset:use>false</dcsset:use>')
 
         if item.get('name'):
@@ -3196,7 +3172,7 @@ def emit_structure_item(lines, item, indent, short_group=False):
         lines.append(f'{indent}<dcsset:item xsi:type="dcsset:StructureItemTable">')
 
         # use=false — отключённая таблица
-        if (not get_dsl_bool(item, ['use'], True)):
+        if item.get('use') is False:
             lines.append(f'{indent}\t<dcsset:use>false</dcsset:use>')
 
         if item.get('name'):
@@ -3245,7 +3221,7 @@ def emit_structure_item(lines, item, indent, short_group=False):
         lines.append(f'{indent}<dcsset:item xsi:type="dcsset:StructureItemChart">')
 
         # use=false — отключённая диаграмма
-        if (not get_dsl_bool(item, ['use'], True)):
+        if item.get('use') is False:
             lines.append(f'{indent}\t<dcsset:use>false</dcsset:use>')
 
         if item.get('name'):
@@ -3341,7 +3317,7 @@ def get_default_selection_fields(defn):
     folders = set()
     for ds in defn.get('dataSets') or []:
         for fd in get_dataset_declared_fields(ds):
-            if isinstance(fd, dict) and get_dsl_bool(fd, ['folder'], False):
+            if isinstance(fd, dict) and fd.get('folder') is True:
                 fp = _ps_str(fd.get('dataPath')) if fd.get('dataPath') else _ps_str(fd.get('field'))
                 if fp:
                     folders.add(fp.lower())
@@ -3372,7 +3348,7 @@ def get_default_selection_fields(defn):
             elif isinstance(fd, dict):
                 if has_field_flag(get_restrict_flag_names(get_field_restrict(fd))):
                     continue
-                if get_dsl_bool(fd, ['folder'], False):
+                if fd.get('folder') is True:
                     continue
                 add(_ps_str(fd.get('dataPath')) if fd.get('dataPath') else _ps_str(fd.get('field')))
     for cf in defn.get('calculatedFields') or []:
@@ -3423,7 +3399,7 @@ def selection_has_fields(items):
             if _ps_truthy(it.get('field')) or selection_has_fields(it.get('items')):
                 return True
             continue
-        if (not get_dsl_bool(it, ['use'], True)) or get_dsl_bool(it, ['auto'], False):
+        if _ps_eq_bool(it.get('use'), False) or _ps_eq_bool(it.get('auto'), True):
             continue
         if _ps_truthy(it.get('field')):
             return True
@@ -3437,7 +3413,7 @@ def find_groups_without_fields(items, inherited, out):
         if not isinstance(it, dict):
             continue
         item_type = _ps_str(it.get('type')) if it.get('type') else 'group'
-        if item_type.lower() != 'group' or (not get_dsl_bool(it, ['use'], True)):
+        if item_type.lower() != 'group' or _ps_eq_bool(it.get('use'), False):
             continue
         own = False
         if 'selection' in it:

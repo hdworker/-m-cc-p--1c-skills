@@ -92,3 +92,15 @@ python ".opencode/skills/db-load-dt/scripts/db-load-dt.py" -InfoBaseServer "srv0
 
 - `/db-dump-dt` — выгрузка ИБ в DT (обратная операция, точка отката перед загрузкой)
 - `/db-create` — создать новую базу (в т.ч. из DT-шаблона)
+
+## Запуск через MCP (`cc`) — без ожидания оболочки
+
+Долгий вызов этого скилла запускать инструментом MCP-сервера `cc`:
+`run_start(script="<имя>.py", args=[...])` → `run_id`; затем жди через
+`run_wait(run_id, timeout_sec=60)` (для долгих операций — до 600 секунд). Если ожидание
+истекло, а задача ещё выполняется, повтори `run_wait`. `run_tail` читай после завершения
+или для диагностики; `run_status` используй только для разовой проверки состояния.
+
+Fallback без MCP: `python "C:\Users\Grishin1c\.config\opencode\skills\_shared\async_run.py" start -- python "<этот-скрипт>" <аргументы>`.
+Мониторинг: `python "C:\Users\Grishin1c\.config\opencode\skills\_shared\cc-status.py"`.
+Полный протокол — `E:\Grishin\Code\_store\PROCESS.md`.

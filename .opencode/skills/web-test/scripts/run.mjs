@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// web-test run v1.25 — CLI entry-point
+// web-test run v1.22 — CLI entry-point
 // Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 /**
  * CLI runner for 1C web client automation.
@@ -11,17 +11,14 @@
  *   node src/run.mjs start <url>            — launch browser, connect to 1C, serve requests
  *   node src/run.mjs run <url> <file|->     — autonomous: connect, execute script, disconnect
  *     start/run: --user=<name> [--password=<pwd>] — log in as that infobase user
- *     start/run: --web [--login=<file>] [--ready=<css>] — a web page, not 1C (web-pages.md)
  *   node src/run.mjs exec <file|->          — run script against existing session
  *   node src/run.mjs shot [file]            — take screenshot
  *   node src/run.mjs stop                   — logout + close browser
  *   node src/run.mjs status                 — check session
  *   node src/run.mjs test <dir|file>... [--url]  — run regression tests
- *   node src/run.mjs play <slides.mjs> --out=<mp4> [--no-narration] [--music=<preset|file>] — slides video without 1C (record + narrate)
- *   node src/run.mjs preview <slides.mjs> [--out-dir=]  — a PNG per slide step + checks
  *
  * Внутренности живут в cli/: util, session, exec-context, server,
- * commands/{start,run,exec,shot,stop,status,test,slides}, test-runner/*.
+ * commands/{start,run,exec,shot,stop,status,test}, test-runner/*.
  */
 import * as browser from './browser.mjs';
 import { usage, die } from './cli/util.mjs';
@@ -32,7 +29,6 @@ import { cmdShot } from './cli/commands/shot.mjs';
 import { cmdStop } from './cli/commands/stop.mjs';
 import { cmdStatus } from './cli/commands/status.mjs';
 import { cmdTest } from './cli/commands/test.mjs';
-import { cmdPlay, cmdPreview } from './cli/commands/slides.mjs';
 
 const [,, cmd, ...rawArgs] = process.argv;
 const flags = {
@@ -56,11 +52,6 @@ if (cmd === 'start' || cmd === 'run') {
   if (login.user === '') die('--user= is empty');
   if (login.password !== undefined && login.user === undefined) die('--password= requires --user=');
 }
-// --web: the session opens a web page instead of 1C (an adjacent system, a video without 1C)
-const webOpts = (cmd === 'start' || cmd === 'run') && rawArgs.includes('--web')
-  ? { login: flagValue('login'), ready: flagValue('ready') } : null;
-if (webOpts && login.user !== undefined) die('--user= is for 1C; on a web page log in by hand in the window, or --login=<file> saved by web.saveLogin');
-if (!webOpts && (flagValue('login') !== undefined || flagValue('ready') !== undefined)) die('--login= / --ready= go with --web');
 
 // Clipboard preservation: default ON. Disabled by --no-preserve-clipboard CLI flag
 // or WEB_TEST_PRESERVE_CLIPBOARD=0 env. cmdTest may further disable via config.
@@ -90,14 +81,12 @@ function parseExecTimeoutMs(argv) {
 }
 
 switch (cmd) {
-  case 'start':  await cmdStart(args[0], login, webOpts); break;
-  case 'run':    await cmdRun(args[0], args[1], flags.execTimeoutMs, login, webOpts); break;
+  case 'start':  await cmdStart(args[0], login); break;
+  case 'run':    await cmdRun(args[0], args[1], flags.execTimeoutMs, login); break;
   case 'exec':   await cmdExec(args[0], flags); break;
   case 'shot':   await cmdShot(args[0]); break;
   case 'stop':   await cmdStop(); break;
   case 'status': await cmdStatus(); break;
   case 'test':   await cmdTest(rawArgs); break;
-  case 'play':   await cmdPlay(args[0], flagValue('out'), { narrate: !rawArgs.includes('--no-narration'), music: flagValue('music') ?? undefined }); break;
-  case 'preview': await cmdPreview(args[0], flagValue('out-dir')); break;
   default:       usage();
 }

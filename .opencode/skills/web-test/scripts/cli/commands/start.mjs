@@ -1,4 +1,4 @@
-// web-test cli/commands/start v1.3
+// web-test cli/commands/start v1.2
 // Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 import http from 'http';
 import { writeFileSync } from 'fs';
@@ -6,9 +6,8 @@ import * as browser from '../../browser.mjs';
 import { out, die } from '../util.mjs';
 import { SESSION_FILE, cleanup } from '../session.mjs';
 import { handleRequest } from '../server.mjs';
-import { connectWeb } from '../../engine/web/pages.mjs';
 
-export async function cmdStart(url, { user, password } = {}, web = null) {
+export async function cmdStart(url, { user, password } = {}) {
   if (!url) die('Usage: node src/run.mjs start <url> [--user=<name> [--password=<pwd>]]');
 
   // A startup blocker (no free 1C licence, publication asking for credentials) is a diagnosis,
@@ -16,7 +15,7 @@ export async function cmdStart(url, { user, password } = {}, web = null) {
   // message and leave instead of dumping a stack trace that reads like an engine failure.
   let state;
   try {
-    state = web ? await connectWeb(url, web) : await browser.connect(url, { user, password });
+    state = await browser.connect(url, { user, password });
   } catch (e) {
     die(e.message);
   }

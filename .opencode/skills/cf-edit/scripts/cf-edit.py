@@ -1,5 +1,23 @@
 #!/usr/bin/env python3
-# cf-edit v1.37 — Edit 1C configuration root (Configuration.xml)
+# --- cc-async auto ---
+import os as _cc_os, sys as _cc_sys
+if (_cc_os.path.basename(_cc_os.path.abspath(__file__)) == _cc_os.path.basename(_cc_sys.argv[0] or "")
+        and not _cc_os.environ.get("CC_SYNC")
+        and not (set(_cc_sys.argv[1:]) & {"-h", "--help", "-V", "--version", "-PrintOnly"})):
+    _cc_shared = _cc_os.path.join(_cc_os.path.dirname(_cc_os.path.dirname(_cc_os.path.dirname(
+        _cc_os.path.abspath(__file__)))), "_shared", "async_run.py")
+    if _cc_os.path.isfile(_cc_shared):
+        import subprocess as _cc_sp
+        _cc_env = dict(_cc_os.environ)
+        _cc_env["CC_SYNC"] = "1"
+        _cc_r = _cc_sp.run([_cc_sys.executable, _cc_shared, "start", "--",
+                            _cc_sys.executable, "-u", _cc_os.path.abspath(__file__)] + _cc_sys.argv[1:],
+                           capture_output=True, text=True, timeout=60, env=_cc_env)
+        _cc_sys.stdout.write(_cc_r.stdout or "")
+        _cc_sys.stderr.write(_cc_r.stderr or "")
+        _cc_sys.exit(0)
+# --- end cc-async ---
+# cf-edit v1.33 — Edit 1C configuration root (Configuration.xml)
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 
 import argparse
@@ -12,42 +30,6 @@ import sys
 import uuid as _uuid
 from html import escape as html_escape
 from lxml import etree
-
-# --- Булевы флаги DSL: прощающий ввод ---
-# Флаг строкой или числом — однозначная ошибка автора JSON: true|да|истина|1 / false|нет|ложь|0 (без
-# регистра; 1/0 — и числом) приводим к bool молча. Иное — ошибка без записи: молчаливое «false» из «yes»
-# хуже отказа. Без общего читателя порты расходились: PS (-eq) принимал "false", py (is) — нет.
-def to_dsl_bool(value, key, default):
-    if value is None:
-        return default
-    if isinstance(value, bool):
-        return value
-    if isinstance(value, str):
-        t = value.strip().lower()
-        if t in ('true', 'да', 'истина', '1'):
-            return True
-        if t in ('false', 'нет', 'ложь', '0'):
-            return False
-    elif isinstance(value, (int, float)):
-        if value == 1:
-            return True
-        if value == 0:
-            return False
-    shown = f'"{value}"' if isinstance(value, str) else f"{value}"
-    print(f"[ERROR] {key} = {shown}: expected true or false", file=sys.stderr)
-    sys.exit(1)
-
-
-def get_dsl_bool(obj, keys, default):
-    """Первый найденный ключ из keys (синонимы, без регистра) → to_dsl_bool; не dict / нет ключа → default."""
-    if not isinstance(obj, dict):
-        return default
-    for k in keys:
-        for actual in obj:
-            if isinstance(actual, str) and actual.lower() == k.lower():
-                return to_dsl_bool(obj[actual], k, default)
-    return default
-
 
 # Регистронезависимый ввод — паритет с PS1: в PowerShell имена параметров и [ValidateSet]
 # регистр не различают, в argparse совпадение точное.
@@ -1245,7 +1227,7 @@ def main():
             h = get_field(entry, ["height", "Height"])
             height = int(h) if h is not None else 10
             vis = get_field(entry, ["visibility", "Visibility"])
-            common = to_dsl_bool(vis, 'visibility', True)
+            common = bool(vis) if vis is not None else True
             roles = get_field(entry, ["roles"])
         else:
             print(f"Home page item must be string or object, got: {entry!r}", file=sys.stderr)
@@ -1256,7 +1238,7 @@ def main():
             for rname, rval in roles.items():
                 if not rname.startswith("Role.") and not UUID_RE.match(rname):
                     rname = f"Role.{rname}"
-                rval_s = 'true' if to_dsl_bool(rval, rname, False) else 'false'
+                rval_s = str(bool(rval)).lower()
                 vis_parts.append(f'{indent}\t\t<xr:Value name="{html_escape(rname, quote=True)}">{rval_s}</xr:Value>')
         vis_block = "\r\n".join(vis_parts)
         esc_form = html_escape(form_ref, quote=True)
@@ -1286,22 +1268,15 @@ def main():
             print(f"Unknown template '{tmpl}'. Allowed: {', '.join(allowed_templates)}", file=sys.stderr)
             sys.exit(1)
 
-        left_items = get_field(layout, ["left", "LeftColumn", "Column"])
+        left_items = get_field(layout, ["left", "LeftColumn"])
         right_items = get_field(layout, ["right", "RightColumn"])
 
-        known = {"template", "WorkingAreaTemplate", "left", "LeftColumn", "Column", "right", "RightColumn"}
+        known = {"template", "WorkingAreaTemplate", "left", "LeftColumn", "right", "RightColumn"}
         for k in layout.keys():
             if k not in known:
                 print(f"Unknown key '{k}'. Allowed: template, left, right", file=sys.stderr)
                 sys.exit(1)
 
-        left_keys = [k for k in layout.keys() if k in ("left", "LeftColumn", "Column")]
-        if len(left_keys) > 1:
-            print(f"Keys {', '.join(left_keys)} all mean the first column - give one of them", file=sys.stderr)
-            sys.exit(1)
-        if "Column" in left_keys and tmpl != "OneColumn":
-            print(f"Key 'Column' is the single column of template 'OneColumn'; template '{tmpl}' takes 'left' and 'right'", file=sys.stderr)
-            sys.exit(1)
         if tmpl == "OneColumn" and right_items:
             print("Template 'OneColumn' cannot have items in 'right' column", file=sys.stderr)
             sys.exit(1)
@@ -1317,12 +1292,8 @@ def main():
             body = "\r\n".join(blocks)
             return f"\t<{tag}>\r\n{body}\r\n\t</{tag}>"
 
-        # Одна колонка у платформы — <Column> без RightColumn; LeftColumn/RightColumn она отвергает
-        # («Текущее LeftColumn, ожидаемое Column», замер 8.3.24).
-        if tmpl == "OneColumn":
-            columns_xml = build_column("Column", left_items)
-        else:
-            columns_xml = build_column("LeftColumn", left_items) + "\r\n" + build_column("RightColumn", right_items)
+        left_xml = build_column("LeftColumn", left_items)
+        right_xml = build_column("RightColumn", right_items)
 
         hp_xml = (
             '<?xml version="1.0" encoding="UTF-8"?>\r\n'
@@ -1331,7 +1302,8 @@ def main():
             'xmlns:xs="http://www.w3.org/2001/XMLSchema" '
             f'xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" version="{format_version}">\r\n'
             f'\t<WorkingAreaTemplate>{tmpl}</WorkingAreaTemplate>\r\n'
-            f'{columns_xml}\r\n'
+            f'{left_xml}\r\n'
+            f'{right_xml}\r\n'
             '</HomePageWorkArea>'
         )
 

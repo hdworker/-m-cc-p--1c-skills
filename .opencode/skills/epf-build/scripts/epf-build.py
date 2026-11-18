@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# epf-build v1.32 — Build external data processor or report (EPF/ERF) from XML sources
+# epf-build v1.26 — Build external data processor or report (EPF/ERF) from XML sources
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 
 import argparse
@@ -200,9 +200,6 @@ def project_extra_args(name):
                     data = json.load(f)
                 v = data.get(name)
                 if v:
-                    # Строка вместо массива — один аргумент, как у PS (@($x)), а не список символов
-                    if not isinstance(v, list):
-                        v = [v]
                     return [str(x) for x in v]
             except Exception:
                 pass
@@ -472,17 +469,6 @@ def quote_if_needed(token):
     return token
 
 
-def quote_text(value):
-    """Free text (user, password, comment, label, list name) framed in quotes for the 1cv8
-    command line. A lone quote inside the value ends it, and the rest is dropped silently
-    (замер 2026-11-14: «-comment» хранилища сохраняется до кавычки, exit 0); 1C reads a
-    doubled quote as one, «\\"» не понимает. On POSIX too: 1cv8 parses quotes inside each
-    argv element the same way (замер на darwin, 8.3.27), so the quote is doubled on every OS;
-    there run_v8 strips only the framing pair and leaves the doubled quote inside."""
-    value = str(value)    # a registry value may be a JSON number
-    return '"%s"' % value.replace('"', '""')
-
-
 def run_v8(v8path, arguments):
     """Run 1cv8 in batch mode and capture its console output.
 
@@ -559,12 +545,9 @@ def output_nonempty(path):
 def _redact(text, *secrets):
     """Redact literal secret values (password, user) from a display string —
     precise, never touches lookalike paths."""
-    # A secret with a quote reaches the command line doubled (quote_text), so both forms
-    # are redacted. Longest first: a shorter form replaced earlier could break a longer one
-    # that contains it and leave part of that secret visible.
-    forms = {f for s in secrets if s for f in (str(s), str(s).replace('"', '""'))}
-    for f in sorted(forms, key=len, reverse=True):
-        text = text.replace(f, "***")
+    for s in secrets:
+        if s:
+            text = text.replace(s, "***")
     return text
 
 
@@ -825,20 +808,6 @@ def main():
         print('Error: -Context задан, но в -Checks нет modules — контексты относятся только к ней')
         sys.exit(1)
     source_dir = os.path.dirname(os.path.abspath(args.SourceFile))
-    # Запросный список проверочная копия проверяет запросом-константой, а без базы запрос сверить не с чем
-    object_src_dir = os.path.join(source_dir, os.path.splitext(os.path.basename(args.SourceFile))[0])
-    manual_query_lists = []
-    for dirpath, _, filenames in os.walk(object_src_dir):
-        if 'Form.xml' in filenames:
-            with open(os.path.join(dirpath, 'Form.xml'), encoding='utf-8-sig', errors='replace') as fh:
-                manual_query_lists += re.findall(r'<Attribute name="([^"]+)"(?:(?!</Attribute>).)*?<ManualQuery>true</ManualQuery>', fh.read(), re.S)
-
-    def print_manual_query_hint(platform_text):
-        if not auto_created_base or not manual_query_lists or not platform_text:
-            return
-        if '\u041d\u0435\u0432\u0435\u0440\u043d\u043e \u0443\u043a\u0430\u0437\u0430\u043d\u0430 \u0433\u043b\u0430\u0432\u043d\u0430\u044f \u0442\u0430\u0431\u043b\u0438\u0446\u0430' in platform_text or any(
-                f'\u041d\u0435\u0432\u0435\u0440\u043d\u044b\u0439 \u043f\u0443\u0442\u044c \u043a \u0434\u0430\u043d\u043d\u044b\u043c: "{n}.' in platform_text for n in manual_query_lists):
-            print('[note] A form with a manual-query dynamic list cannot be built without an infobase: specify the database')
     check_config_src = resolve_config_src(args) if check_list else None
 
     def new_stub_base(base_path, embed):
@@ -942,9 +911,6 @@ def main():
                 print(f"Error: exit code 0 but no non-empty file at {args.OutputFile} — build produced no output")
             else:
                 print(f"Error building external data processor/report (code: {exit_code})")
-            print_platform_output(result)
-            if exit_code != 0:
-                print_manual_query_hint((result.stdout or '') + (result.stderr or ''))
             sys.exit(exit_code)
 
         # --- Build arguments ---
@@ -956,9 +922,9 @@ def main():
             arguments += ["/F", f'"{args.InfoBasePath}"']
 
         if args.UserName:
-            arguments.append('/N' + quote_text(args.UserName))
+            arguments.append(f'/N"{args.UserName}"')
         if args.Password:
-            arguments.append('/P' + quote_text(args.Password))
+            arguments.append(f'/P"{args.Password}"')
 
         arguments += ["/LoadExternalDataProcessorOrReportFromFiles", f'"{args.SourceFile}"', f'"{args.OutputFile}"']
 
@@ -985,7 +951,6 @@ def main():
         else:
             print(f"Error building (code: {exit_code})")
 
-        log_content = ""
         if os.path.isfile(out_file):
             try:
                 with open(out_file, "r", encoding="utf-8-sig") as f:
@@ -998,8 +963,6 @@ def main():
                 pass
 
         print_platform_output(result)
-        if exit_code != 0:
-            print_manual_query_hint((log_content or '') + (result.stdout or ''))
         sys.exit(exit_code)
 
     finally:

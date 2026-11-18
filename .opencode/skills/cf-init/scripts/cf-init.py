@@ -1,5 +1,23 @@
 #!/usr/bin/env python3
-# cf-init v1.18 — Create empty 1C configuration scaffold (+write_xml_file/write_utf8_bom: общий эталон записи)
+# --- cc-async auto ---
+import os as _cc_os, sys as _cc_sys
+if (_cc_os.path.basename(_cc_os.path.abspath(__file__)) == _cc_os.path.basename(_cc_sys.argv[0] or "")
+        and not _cc_os.environ.get("CC_SYNC")
+        and not (set(_cc_sys.argv[1:]) & {"-h", "--help", "-V", "--version", "-PrintOnly"})):
+    _cc_shared = _cc_os.path.join(_cc_os.path.dirname(_cc_os.path.dirname(_cc_os.path.dirname(
+        _cc_os.path.abspath(__file__)))), "_shared", "async_run.py")
+    if _cc_os.path.isfile(_cc_shared):
+        import subprocess as _cc_sp
+        _cc_env = dict(_cc_os.environ)
+        _cc_env["CC_SYNC"] = "1"
+        _cc_r = _cc_sp.run([_cc_sys.executable, _cc_shared, "start", "--",
+                            _cc_sys.executable, "-u", _cc_os.path.abspath(__file__)] + _cc_sys.argv[1:],
+                           capture_output=True, text=True, timeout=60, env=_cc_env)
+        _cc_sys.stdout.write(_cc_r.stdout or "")
+        _cc_sys.stderr.write(_cc_r.stderr or "")
+        _cc_sys.exit(0)
+# --- end cc-async ---
+# cf-init v1.17 — Create empty 1C configuration scaffold (+write_xml_file/write_utf8_bom: общий эталон записи)
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 """Generates minimal XML source files for a 1C configuration."""
 import sys, os, argparse, re, uuid
@@ -145,8 +163,6 @@ def main():
     is_221 = format_rank_value >= 221
     # TextToSpeech приехал раньше остальных вставок 8.5 — своей ступенью, поэтому гейт отдельный.
     is_218 = format_rank_value >= 218
-    is_217 = format_rank_value >= 217
-    is_216 = format_rank_value >= 216
 
     mobile_funcs = [
         ("Biometrics","true"), ("Location","false"), ("BackgroundLocation","false"),
@@ -160,18 +176,15 @@ def main():
         ("BackgroundAudioPlaybackAndVibration","false"), ("InstallPackages","false"),
         ("OSBackup","true"), ("ApplicationUsageStatistics","false"),
         ("BarcodeScanning","false"), ("BackgroundAudioRecording","false"),
-        ("AllFilesAccess","false"),
+        ("AllFilesAccess","false"), ("Videoconferences","false"), ("NFC","false"),
+        ("DocumentScanning","false"), ("SpeechToText","false"), ("Geofences","false"),
+        ("IncomingShareRequests","false"), ("AllIncomingShareRequestsTypesProcessing","false"),
     ]
-    # Возможности мобильного приложения прибавляются ступенями формата, в конец списка, — по выгрузкам
-    # пустой ИБ самих платформ: 2.13 (8.3.20) — 30, 2.16 (8.3.23) — 33, 2.17 (8.3.24) — 37, 2.18–2.21 — 38.
-    # Гейт обязателен в обе стороны: незнакомый платформе тег ломает загрузку XDTO-ошибкой (8.3.20, 8.3.23,
-    # TextToSpeech на 8.3.24), а без знакомого платформа подставит false и допишет его при выгрузке —
-    # разойдётся роундтрип. 2.14/2.15 (8.3.21/8.3.22) не замерены — список 2.13: короткий загрузится.
-    if is_216:
-        mobile_funcs += [("Videoconferences", "false"), ("NFC", "false"), ("DocumentScanning", "false")]
-    if is_217:
-        mobile_funcs += [("SpeechToText", "false"), ("Geofences", "false"), ("IncomingShareRequests", "false"),
-                         ("AllIncomingShareRequestsTypesProcessing", "false")]
+    # TextToSpeech — возможность мобильного приложения, добавленная форматом 2.18 (8.3.25),
+    # последней в списке; в 2.21 список не менялся. Замерено выгрузками пустой ИБ шести платформ:
+    # 2.13/2.17 — 37 записей без неё, 2.18-2.21 — 38 с ней. Гейт обязателен и в обе стороны:
+    # на 2.17 тег ломает загрузку XDTO-ошибкой (проверено на 8.3.24), без тега на 2.18+ платформа
+    # подставит дефолт false и допишет его при выгрузке — то есть разойдётся роундтрип.
     if is_218:
         mobile_funcs.append(("TextToSpeech", "false"))
 
@@ -202,13 +215,6 @@ def main():
     # Свойства и пространство имён формата 2.21 (платформа 8.5). Значения и ПОЗИЦИИ сняты
     # с выгрузки 8.5.1 (debug/fmt221/dump_v851): те же исходники, выгруженные с 8.3.27 и
     # с 8.5.1, различаются ровно этим. Порядок важен — вставки идут на своё место.
-    # Свойства конфигурации, которых нет в старых форматах (выгрузки пустой ИБ 8.3.20 и 8.3.23: незнакомое
-    # свойство платформа отбрасывает с записью «Неверное свойство объекта метаданных» в лог загрузки).
-    # DefaultReportAppearanceTemplate и DatabaseTablespacesUseMode — есть в 2.16, нет в 2.13 (2.14/2.15 не
-    # замерены — без них: незаписанное знакомое свойство платформа заполнит умолчанием); AllowedIncomingShareRequestTypes — с 2.17.
-    gate_report_appearance = "\r\n\t\t\t<DefaultReportAppearanceTemplate/>" if is_216 else ""
-    gate_tablespaces = "\r\n\t\t\t<DatabaseTablespacesUseMode>DontUse</DatabaseTablespacesUseMode>" if is_216 else ""
-    gate_share_types = "\r\n\t\t\t<AllowedIncomingShareRequestTypes/>" if is_217 else ""
     pal_ns = ""
     f221_aux_forms = f221_window_variant = f221_open_variant = f221_captions = f221_migration = ""
     if is_221:
@@ -268,7 +274,8 @@ def main():
 \t\t\t<Content/>
 \t\t\t<DefaultReportForm/>
 \t\t\t<DefaultReportVariantForm/>
-\t\t\t<DefaultReportSettingsForm/>{gate_report_appearance}
+\t\t\t<DefaultReportSettingsForm/>
+\t\t\t<DefaultReportAppearanceTemplate/>
 \t\t\t<DefaultDynamicListSettingsForm/>
 \t\t\t<DefaultSearchForm/>
 \t\t\t<DefaultDataHistoryChangeHistoryForm/>
@@ -279,7 +286,8 @@ def main():
 \t\t\t<UsedMobileApplicationFunctionalities>{mobile_xml}
 \t\t\t</UsedMobileApplicationFunctionalities>
 \t\t\t<StandaloneConfigurationRestrictionRoles/>
-\t\t\t<MobileApplicationURLs/>{gate_share_types}{f221_window_variant}
+\t\t\t<MobileApplicationURLs/>
+\t\t\t<AllowedIncomingShareRequestTypes/>{f221_window_variant}
 \t\t\t<MainClientApplicationWindowMode>Normal</MainClientApplicationWindowMode>{f221_open_variant}
 \t\t\t<DefaultInterface/>{f221_captions}
 \t\t\t<DefaultStyle/>
@@ -293,7 +301,8 @@ def main():
 \t\t\t<ObjectAutonumerationMode>NotAutoFree</ObjectAutonumerationMode>
 \t\t\t<ModalityUseMode>DontUse</ModalityUseMode>
 \t\t\t<SynchronousPlatformExtensionAndAddInCallUseMode>DontUse</SynchronousPlatformExtensionAndAddInCallUseMode>
-\t\t\t<InterfaceCompatibilityMode>TaxiEnableVersion8_2</InterfaceCompatibilityMode>{f221_migration}{gate_tablespaces}
+\t\t\t<InterfaceCompatibilityMode>TaxiEnableVersion8_2</InterfaceCompatibilityMode>{f221_migration}
+\t\t\t<DatabaseTablespacesUseMode>DontUse</DatabaseTablespacesUseMode>
 \t\t\t<CompatibilityMode>{compat}</CompatibilityMode>
 \t\t\t<DefaultConstantsForm/>
 \t\t</Properties>

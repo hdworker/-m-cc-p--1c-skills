@@ -1,0 +1,3 @@
+interface:
+  display_name: "OpenGate"
+  short_description: "Use local OpenCode Serve as an AI gateway"

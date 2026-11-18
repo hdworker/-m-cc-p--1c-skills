@@ -1,5 +1,23 @@
 #!/usr/bin/env python3
-# cf-info v1.12 — Compact summary of 1C configuration root
+# --- cc-async auto ---
+import os as _cc_os, sys as _cc_sys
+if (_cc_os.path.basename(_cc_os.path.abspath(__file__)) == _cc_os.path.basename(_cc_sys.argv[0] or "")
+        and not _cc_os.environ.get("CC_SYNC")
+        and not (set(_cc_sys.argv[1:]) & {"-h", "--help", "-V", "--version", "-PrintOnly"})):
+    _cc_shared = _cc_os.path.join(_cc_os.path.dirname(_cc_os.path.dirname(_cc_os.path.dirname(
+        _cc_os.path.abspath(__file__)))), "_shared", "async_run.py")
+    if _cc_os.path.isfile(_cc_shared):
+        import subprocess as _cc_sp
+        _cc_env = dict(_cc_os.environ)
+        _cc_env["CC_SYNC"] = "1"
+        _cc_r = _cc_sp.run([_cc_sys.executable, _cc_shared, "start", "--",
+                            _cc_sys.executable, "-u", _cc_os.path.abspath(__file__)] + _cc_sys.argv[1:],
+                           capture_output=True, text=True, timeout=60, env=_cc_env)
+        _cc_sys.stdout.write(_cc_r.stdout or "")
+        _cc_sys.stderr.write(_cc_r.stderr or "")
+        _cc_sys.exit(0)
+# --- end cc-async ---
+# cf-info v1.10 — Compact summary of 1C configuration root
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 
 import argparse
@@ -215,8 +233,7 @@ def get_home_page_layout():
     tn = hp_root.find(f"{{{HP_NS}}}WorkingAreaTemplate")
     if tn is not None and tn.text:
         result["template"] = tn.text.strip()
-    # Шаблон OneColumn хранит единственную колонку в <Column>
-    for col_name, key in (("Column", "left"), ("LeftColumn", "left"), ("RightColumn", "right")):
+    for col_name, key in (("LeftColumn", "left"), ("RightColumn", "right")):
         col = hp_root.find(f"{{{HP_NS}}}{col_name}")
         if col is None:
             continue
@@ -394,10 +411,7 @@ if args.Mode == "overview" and not args.Section:
     if home_page:
         out("--- Начальная страница ---")
         out(f"  Шаблон: {home_page['template']}")
-        if home_page["template"] == "OneColumn":
-            out(f"  Column: {len(home_page['left'])}  (детали: -Section home-page)")
-        else:
-            out(f"  LeftColumn: {len(home_page['left'])}, RightColumn: {len(home_page['right'])}  (детали: -Section home-page)")
+        out(f"  LeftColumn: {len(home_page['left'])}, RightColumn: {len(home_page['right'])}  (детали: -Section home-page)")
         out()
 
     # Object counts table
@@ -429,9 +443,7 @@ if args.Section == "home-page":
         out()
         out(f"Шаблон: {home_page['template']}")
         out()
-        # У OneColumn единственная колонка — <Column>; подписи — XML-имена, как их ждёт платформа
-        sides = (("Column", "left"),) if home_page["template"] == "OneColumn" else (("LeftColumn", "left"), ("RightColumn", "right"))
-        for col_lbl, col_key in sides:
+        for col_lbl, col_key in (("LeftColumn", "left"), ("RightColumn", "right")):
             items = home_page[col_key]
             if not items:
                 out(f"{col_lbl}: —")
@@ -540,10 +552,7 @@ if args.Mode == "full" and not args.Section:
     if home_page:
         out("--- Начальная страница ---")
         out(f"  Шаблон: {home_page['template']}")
-        if home_page["template"] == "OneColumn":
-            out(f"  Column: {len(home_page['left'])}  (детали: -Section home-page)")
-        else:
-            out(f"  LeftColumn: {len(home_page['left'])}, RightColumn: {len(home_page['right'])}  (детали: -Section home-page)")
+        out(f"  LeftColumn: {len(home_page['left'])}, RightColumn: {len(home_page['right'])}  (детали: -Section home-page)")
         out()
 
     # --- Section: Storages & default forms ---

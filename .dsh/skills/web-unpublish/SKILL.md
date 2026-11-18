@@ -1,0 +1,56 @@
+---
+name: web-unpublish
+description: Удаление веб-публикации 1С из Apache. Используй когда пользователь просит убрать публикацию, удалить веб-доступ к базе
+---
+
+# web-unpublish — Удаление веб-публикации 1С из Apache
+
+Удаляет блок публикации из `httpd.conf` и каталог `publish/{appname}` внутри Apache. Если других публикаций не осталось — удаляет глобальный блок 1C и останавливает Apache. С флагом `--all` удаляет все публикации разом.
+
+> **Внимание:** этот навык управляет только веб-публикациями в Apache (блоки в `httpd.conf` + каталог `publish/`). Он **НЕ** удаляет каталоги проекта, `upload/`, базы данных или исходники.
+
+## Usage
+
+```
+python "$env:USERPROFILE\.dsh\skills\web-unpublish\scripts\web-unpublish.py" <appname>
+python "$env:USERPROFILE\.dsh\skills\web-unpublish\scripts\web-unpublish.py" bpdemo
+python "$env:USERPROFILE\.dsh\skills\web-unpublish\scripts\web-unpublish.py" --all
+```
+
+## Параметры подключения
+
+Прочитай `.v8-project.json` из корня проекта. Если задан `webPath` — используй как `-ApachePath`.
+По умолчанию `tools/apache24` от корня проекта.
+
+Если пользователь не указал `appname` и не указал `--all`, выполни `web-info` чтобы показать список публикаций и спроси какую удалить.
+
+Если пользователь просит удалить **все** публикации — используй `-All`.
+
+## Команда
+
+```powershell
+python "$env:USERPROFILE\.dsh\skills\web-unpublish/scripts/web-unpublish.py" <параметры>
+```
+
+### Параметры скрипта
+
+| Параметр | Обязательный | Описание |
+|----------|:------------:|----------|
+| `-AppName <имя>` | * | Имя публикации |
+| `-All` | * | Удалить все публикации |
+| `-ApachePath <путь>` | нет | Корень Apache (по умолчанию `tools/apache24`) |
+
+> `*` — нужен либо `-AppName`, либо `-All`
+
+## Примеры
+
+```powershell
+# Удалить одну публикацию
+python "$env:USERPROFILE\.dsh\skills\web-unpublish/scripts/web-unpublish.py" -AppName "bpdemo"
+
+# Удалить все публикации
+python "$env:USERPROFILE\.dsh\skills\web-unpublish/scripts/web-unpublish.py" -All
+
+# С указанием пути
+python "$env:USERPROFILE\.dsh\skills\web-unpublish/scripts/web-unpublish.py" -AppName "mydb" -ApachePath "C:\tools\apache24"
+```

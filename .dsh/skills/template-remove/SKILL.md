@@ -1,0 +1,38 @@
+---
+name: template-remove
+description: Удалить макет из объекта 1С (обработка, отчёт, справочник, документ и др.)
+---
+
+# template-remove — Удаление макета
+
+Удаляет макет и убирает его регистрацию из корневого XML объекта.
+
+## Usage
+
+```
+python "$env:USERPROFILE\.dsh\skills\template-remove\scripts\template-remove.py" <ObjectName> <TemplateName>
+```
+
+| Параметр     | Обязательный | По умолчанию | Описание                            |
+|--------------|:------------:|--------------|-------------------------------------|
+| ObjectName   | да           | —            | Имя объекта                         |
+| TemplateName | да           | —            | Имя макета для удаления             |
+| SrcDir       | нет          | `src`        | Каталог исходников                  |
+
+## Команда
+
+```powershell
+python "$env:USERPROFILE\.dsh\skills\template-remove/scripts/remove-template.py" -ObjectName "<ObjectName>" -TemplateName "<TemplateName>" [-SrcDir "<SrcDir>"]
+```
+
+## Что удаляется
+
+```
+<SrcDir>/<ObjectName>/Templates/<TemplateName>.xml     # Метаданные макета
+<SrcDir>/<ObjectName>/Templates/<TemplateName>/         # Каталог макета (рекурсивно)
+```
+
+## Что модифицируется
+
+- `<SrcDir>/<ObjectName>.xml` — убирается `<Template>` из `ChildObjects`
+- Для ExternalReport/Report: если удалённый макет был указан в `MainDataCompositionSchema` — значение очищается

@@ -35,7 +35,7 @@ JSON-черновик в формате `form-compile` — **не полное �
 
 ## Workflow
 
-1. `/form-decompile <Form.xml> -OutputPath draft.json` — получить черновик.
+1. `form-decompile <Form.xml> -OutputPath draft.json` — получить черновик.
 2. Поправить JSON под задачу.
-3. `/form-compile -JsonPath draft.json -OutputPath new/Form.xml` — собрать обратно.
+3. `form-compile -JsonPath draft.json -OutputPath new/Form.xml` — собрать обратно.
 4. `form-validate` + `form-info` — проверить результат.

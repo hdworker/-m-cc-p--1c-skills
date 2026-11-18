@@ -34,6 +34,6 @@ python "$env:USERPROFILE\.dsh\skills\xdto-validate/scripts/xdto-validate.py" -Pa
 
 ## Типичный workflow
 
-1. `xdto-compile`, `xdto-edit` или переработка через `xdto-decompile` → `/xdto-compile -Force`
-2. `/xdto-validate <путь>` — до загрузки в базу
+1. `xdto-compile`, `xdto-edit` или переработка через `xdto-decompile` → `xdto-compile -Force`
+2. `xdto-validate <путь>` — до загрузки в базу
 3. `db-load-xml` + `db-update`

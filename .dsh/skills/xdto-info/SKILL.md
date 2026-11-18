@@ -65,9 +65,9 @@ python "$env:USERPROFILE\.dsh\skills\xdto-info/scripts/xdto-info.py" -PackagePat
 
 ## Типичный workflow
 
-1. `/xdto-info src` — какие пакеты есть
-2. `/xdto-info src -Namespace "<URI>"` — точки входа и типы пакета
-3. `/xdto-info src -Namespace "<URI>" -Name <Тип> -Depth 2` — структура для кода
+1. `xdto-info src` — какие пакеты есть
+2. `xdto-info src -Namespace "<URI>"` — точки входа и типы пакета
+3. `xdto-info src -Namespace "<URI>" -Name <Тип> -Depth 2` — структура для кода
 4. Перед правкой типа: `-Mode used-by -Name <Тип>` — кого затронет
 
 Нужна сама XML-схема, а не сводка, — это `xdto-decompile`.

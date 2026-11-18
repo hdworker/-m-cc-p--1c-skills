@@ -63,7 +63,7 @@ python "$env:USERPROFILE\.dsh\skills\skd-info/scripts/skd-info.py" -TemplatePath
 4. `variant -Name <N>` — посмотреть группировки и фильтры варианта
 
 Переработка запроса (round-trip): `query -Name <набор> -Raw -OutFile q.sql` →
-правка `q.sql` → `/skd-edit <tpl> -Operation set-query -Value "@q.sql"`. Флаг
+правка `q.sql` → `skd-edit <tpl> -Operation set-query -Value "@q.sql"`. Флаг
 `-Raw` отдаёт запрос целиком без декораций, поэтому выгрузка ↔ возврат
 точны (включая многопакетные запросы с временными таблицами).
 

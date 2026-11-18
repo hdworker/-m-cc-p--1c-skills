@@ -99,9 +99,9 @@ XSD выразительнее модели XDTO. Всё, что не перен
 ## Типичный workflow
 
 1. Получить XSD от контрагента (или выгрузить схему существующего пакета: `xdto-decompile`)
-2. `/xdto-compile -XsdPath <файл> -OutputDir <каталог-исходников>` — прочитать предупреждения
-3. `/xdto-validate <каталог-исходников>/XDTOPackages/<Имя>` — убедиться, что типы разрешились
+2. `xdto-compile -XsdPath <файл> -OutputDir <каталог-исходников>` — прочитать предупреждения
+3. `xdto-validate <каталог-исходников>/XDTOPackages/<Имя>` — убедиться, что типы разрешились
 4. `db-load-xml` + `db-update`
 
 Правка существующего пакета: точечно — `xdto-edit`; переработать схему целиком —
-`xdto-decompile` → правка XSD → `/xdto-compile -Force`.
+`xdto-decompile` → правка XSD → `xdto-compile -Force`.

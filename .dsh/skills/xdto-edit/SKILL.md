@@ -9,7 +9,7 @@ description: Точечное редактирование пакета XDTO 1С
 пакетов (`EnterpriseData` — около мегабайта) это единственный практичный путь.
 
 Если нужно переработать схему целиком или сперва разобраться, как она устроена, —
-`xdto-decompile` → правка XSD → `/xdto-compile -Force`.
+`xdto-decompile` → правка XSD → `xdto-compile -Force`.
 
 ## Параметры
 
@@ -74,7 +74,7 @@ python "$env:USERPROFILE\.dsh\skills\xdto-edit/scripts/xdto-edit.py" -PackagePat
 Путь продолжается внутрь встроенных типов: `ПлатежныйДокумент.ДатаСписано.ИдПлатежа`.
 
 Посмотреть, что есть в пакете и как называется нужный тип, — `xdto-info`.
-Перед правкой типа полезно `/xdto-info -Mode used-by -Name <Тип>`: покажет,
+Перед правкой типа полезно `xdto-info -Mode used-by -Name <Тип>`: покажет,
 кого затронет изменение.
 
 ## Что тянет за собой переименование и смена namespace
@@ -92,7 +92,7 @@ python "$env:USERPROFILE\.dsh\skills\xdto-edit/scripts/xdto-edit.py" -PackagePat
 
 ## Типичный workflow
 
-1. `/xdto-info <пакет>` — найти нужный тип
-2. `/xdto-info <пакет> -Mode used-by -Name <Тип>` — если меняешь существующее
-3. `/xdto-edit <пакет> -Operation <op> …`
+1. `xdto-info <пакет>` — найти нужный тип
+2. `xdto-info <пакет> -Mode used-by -Name <Тип>` — если меняешь существующее
+3. `xdto-edit <пакет> -Operation <op> …`
 4. `db-load-xml` + `db-update`

@@ -124,7 +124,7 @@ python "$env:USERPROFILE\.dsh\skills\db-repo/scripts/db-repo.py" -Command <по�
 Корень конфигурации — `Конфигурация`.
 
 Если объект «не найден», это не всегда опечатка: он мог появиться в хранилище позже, чем
-обновлялась база (`/db-repo update`), либо это вовсе не объект хранилища — реквизит или
+обновлялась база (`db-repo update`), либо это вовсе не объект хранилища — реквизит или
 табличная часть.
 
 ## Результат
@@ -190,10 +190,10 @@ python "$env:USERPROFILE\.dsh\skills\db-repo/scripts/db-repo.py" -Command lock -
 
 ## После выполнения
 
-- `lock` или `update` сообщил о полученных объектах — выполни `/db-dump-xml -Mode Partial` с
+- `lock` или `update` сообщил о полученных объектах — выполни `db-dump-xml -Mode Partial` с
   указанным в выводе файлом, и только потом правь исходники
-- после `lock` правки идут через `/db-load-xml -Mode Partial` и `db-update`
-- изменения готовы — предложи `/db-repo commit` с комментарием
+- после `lock` правки идут через `db-load-xml -Mode Partial` и `db-update`
+- изменения готовы — предложи `db-repo commit` с комментарием
 
 ## Запуск в DSH — без ожидания оболочки
 

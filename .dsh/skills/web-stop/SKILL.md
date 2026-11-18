@@ -32,8 +32,8 @@ python "$env:USERPROFILE\.dsh\skills\web-stop/scripts/web-stop.py" <параме
 ## После выполнения
 
 Предложи пользователю:
-- **Перезапуск** — `/web-publish <база>` (повторный вызов поднимет Apache с существующими публикациями)
-- **Удаление публикаций** — `/web-unpublish <имя>` или `/web-unpublish --all`
+- **Перезапуск** — `web-publish <база>` (повторный вызов поднимет Apache с существующими публикациями)
+- **Удаление публикаций** — `web-unpublish <имя>` или `web-unpublish --all`
 
 ## Примеры
 

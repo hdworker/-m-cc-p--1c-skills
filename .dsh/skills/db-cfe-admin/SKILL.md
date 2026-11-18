@@ -84,11 +84,11 @@ python "$env:USERPROFILE\.dsh\skills\db-cfe-admin/scripts/db-cfe-admin.py" -Comm
 | Задача | Навык |
 |--------|-------|
 | Создать расширение, заимствовать объекты, перехватить метод | `cfe-init`, `cfe-borrow`, `cfe-patch-method`, `cfe-validate` |
-| Загрузить исходники расширения в базу | `/db-load-xml -Extension` (из коммита Git — `db-load-git`) |
-| Загрузить готовый `.cfe` | `/db-load-cf -Extension` |
-| Выгрузить расширение из базы | `/db-dump-xml -Extension`, `/db-dump-cf -Extension` |
-| Обновить конфигурацию базы после загрузки | `/db-update -Extension` |
-| Проверить дрейф контролируемых методов по исходникам | `/cfe-patch-method -Check` |
+| Загрузить исходники расширения в базу | `db-load-xml -Extension` (из коммита Git — `db-load-git`) |
+| Загрузить готовый `.cfe` | `db-load-cf -Extension` |
+| Выгрузить расширение из базы | `db-dump-xml -Extension`, `db-dump-cf -Extension` |
+| Обновить конфигурацию базы после загрузки | `db-update -Extension` |
+| Проверить дрейф контролируемых методов по исходникам | `cfe-patch-method -Check` |
 
 ## Примеры
 

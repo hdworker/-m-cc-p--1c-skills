@@ -38,8 +38,8 @@ python "$env:USERPROFILE\.dsh\skills\meta-decompile/scripts/meta-decompile.py" -
 
 ## Workflow (сборка нового объекта по образцу)
 
-1. `/meta-decompile <Образец.xml> -OutputPath draft.json` — получить заготовку.
+1. `meta-decompile <Образец.xml> -OutputPath draft.json` — получить заготовку.
 2. В `draft.json` **сменить `name`** на имя нового объекта и адаптировать состав (реквизиты/ТЧ/свойства). Ссылки на *другие* объекты (владельцы, ввод на основании, типы) — по имени, сохраняются как есть.
-3. `/meta-compile -JsonPath draft.json -OutputDir <ConfigDir>` — собрать (объект получит свежие UUID).
+3. `meta-compile -JsonPath draft.json -OutputDir <ConfigDir>` — собрать (объект получит свежие UUID).
 4. `meta-validate` + `meta-info` — проверить.
 5. Модули, формы, макеты, права — добавить отдельно (в черновик они не попадают).

@@ -38,8 +38,8 @@ JSON-черновик в формате `skd-compile` — **не полное о
 
 ## Workflow
 
-1. `/skd-decompile <Template.xml> -OutputPath draft.json` — получить черновик.
+1. `skd-decompile <Template.xml> -OutputPath draft.json` — получить черновик.
 2. Открыть `draft.warnings.md`, посмотреть, что не покрылось.
 3. Поправить JSON под задачу. Sentinel-узлы — заменить на ручную реализацию (через явный raw `template`, через ручное описание appearance и т.п.) либо удалить, если конструкция в новом отчёте не нужна.
-4. `/skd-compile -DefinitionFile draft.json -OutputPath new-Template.xml` — собрать обратно.
+4. `skd-compile -DefinitionFile draft.json -OutputPath new-Template.xml` — собрать обратно.
 5. `skd-validate` + `skd-info` — проверить.

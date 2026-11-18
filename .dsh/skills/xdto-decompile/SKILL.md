@@ -27,7 +27,7 @@ python "$env:USERPROFILE\.dsh\skills\xdto-decompile/scripts/xdto-decompile.py" -
 
 ## Переработка схемы целиком
 
-`xdto-decompile` → правка XSD → `/xdto-compile -Force` возвращает пакет без потерь,
+`xdto-decompile` → правка XSD → `xdto-compile -Force` возвращает пакет без потерь,
 включая имя, синоним и комментарий объекта метаданных — они выгружаются
 в `xs:annotation/xs:appinfo`.
 

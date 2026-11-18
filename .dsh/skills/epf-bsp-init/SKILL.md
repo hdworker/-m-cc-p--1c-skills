@@ -161,7 +161,7 @@ python "$env:USERPROFILE\.dsh\skills\epf-bsp-init\scripts\epf-bsp-init.py" <Proc
 
 ## Пример
 
-Пользователь: `/epf-bsp-init МояОбработка печатная форма для Документ.СчетНаОплату`
+Пользователь: `epf-bsp-init МояОбработка печатная форма для Документ.СчетНаОплату`
 
 Результат в `ObjectModule.bsl`:
 

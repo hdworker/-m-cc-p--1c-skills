@@ -30,7 +30,7 @@ python "$env:USERPROFILE\.dsh\skills\web-publish\scripts\web-publish.py" dev --p
 - **`-Password`** — из поля `password` найденной записи базы (если есть)
 - **`-ApachePath`** — из `webPath` в `.v8-project.json` (если есть)
 
-Если файла `.v8-project.json` нет — предложи `/db-list add`.
+Если файла `.v8-project.json` нет — предложи `db-list add`.
 
 ## Команда
 
@@ -76,11 +76,11 @@ python "$env:USERPROFILE\.dsh\skills\web-publish/scripts/web-publish.py" <пар
    - Web-сервисы: `http://localhost:{Port}/{AppName}/ws/<Имя>?wsdl`
 2. Предложи открыть в браузере
 3. Если нужно протестировать сервис — помоги составить запрос
-4. Если база не зарегистрирована — предложи `/db-list add`
+4. Если база не зарегистрирована — предложи `db-list add`
 
 Сервисы расширений публикуются наравне с сервисами конфигурации. Если сервис расширения всё же
 отдаёт 404 (HTTP) или 500 «Сервис не найден» (SOAP) — расширение не применено к базе данных:
-`/db-update -Extension <имя>`.
+`db-update -Extension <имя>`.
 
 ## Примеры
 

@@ -17,6 +17,23 @@ if (_cc_os.path.basename(_cc_os.path.abspath(__file__)) == _cc_os.path.basename(
         _cc_sys.stderr.write(_cc_r.stderr or "")
         _cc_sys.exit(0)
 # --- end cc-async ---
+
+
+def _cc_export_log(kind, name, target, operation, source=""):
+    """Запись в EXPORTS.md проекта (журнал выгрузок и сборок)."""
+    try:
+        import subprocess as _sp
+        _helper = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__)))), "_shared", "export_log.py")
+        if not os.path.isfile(_helper):
+            return
+        _cmd = [sys.executable, _helper, "add", "--kind", kind, "--name", name,
+                "--target", target, "--operation", operation]
+        if source:
+            _cmd += ["--source", source]
+        _sp.run(_cmd, check=False, capture_output=True, text=True, timeout=30)
+    except Exception:
+        pass
 # epf-dump v1.22 — Dump external data processor or report (EPF/ERF) to XML sources
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 
@@ -722,6 +739,8 @@ def main():
             exit_code = 1
         if exit_code == 0:
             print(f"Dump completed successfully to: {args.OutputDir}")
+            _cc_export_log("Обработка", os.path.basename(args.InputFile),
+                           args.OutputDir, "epf-dump", args.InputFile)
         elif out_missing:
             print(f"Error: exit code 0 but no files under {args.OutputDir} — dump produced no output")
         else:

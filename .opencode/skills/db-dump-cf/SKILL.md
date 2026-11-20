@@ -80,3 +80,14 @@ python ".opencode/skills/db-dump-cf/scripts/db-dump-cf.py" -InfoBasePath "C:\Bas
 Fallback без MCP: `python "C:\Users\Grishin1c\.config\opencode\skills\_shared\async_run.py" start -- python "<этот-скрипт>" <аргументы>`.
 Мониторинг: `python "C:\Users\Grishin1c\.config\opencode\skills\_shared\cc-status.py"`.
 Полный протокол — `E:\Grishin\Code\_store\PROCESS.md`.
+
+## Журнал выгрузок
+
+После успешной выгрузки скрипт сам дописывает запись в `EXPORTS.md` проекта:
+дата, тип (Обработка/CF/CFE/XML), имя, каталог, операция, источник.
+
+**Перед новой выгрузкой сначала посмотри журнал** — возможно, результат уже есть
+и повторять выгрузку не нужно.
+
+Показать журнал: `python "...\_shared\export_log.py" show`
+(если журнала ещё нет — он появится после первой успешной выгрузки).

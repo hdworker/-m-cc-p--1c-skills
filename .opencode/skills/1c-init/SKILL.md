@@ -32,7 +32,8 @@ allowed-tools:
    - иначе — `cfe-init` (Purpose=AddOn, префикс, `-ConfigPath` из эталона).
 5. Готовит `build\`, `checks\current.md`.
 
-В режиме `-ProjectOnly` создаются `.v8-project.json`, `build\` и `checks\current.md`;
+В режиме `-ProjectOnly` создаются `.v8-project.json`, `build\`, `checks\current.md`
+и `AGENTS.md` с правилами проекта (если файла ещё нет — существующий не перезаписывается).
 исходники расширений не создаются и не изменяются. `check.url` остаётся пустым до определения задачи.
 
 ## Команда

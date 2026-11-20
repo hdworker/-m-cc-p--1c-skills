@@ -2,6 +2,23 @@
 # epf-build v1.26 — Build external data processor or report (EPF/ERF) from XML sources
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 
+
+def _cc_export_log(kind, name, target, operation, source=""):
+    """Запись в EXPORTS.md проекта (журнал выгрузок и сборок)."""
+    try:
+        import subprocess as _sp
+        _helper = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__)))), "_shared", "export_log.py")
+        if not os.path.isfile(_helper):
+            return
+        _cmd = [sys.executable, _helper, "add", "--kind", kind, "--name", name,
+                "--target", target, "--operation", operation]
+        if source:
+            _cmd += ["--source", source]
+        _sp.run(_cmd, check=False, capture_output=True, text=True, timeout=30)
+    except Exception:
+        pass
+
 import argparse
 import atexit
 import glob
@@ -946,6 +963,9 @@ def main():
             exit_code = 1
         if exit_code == 0:
             print(f"Build completed successfully: {args.OutputFile}")
+            _cc_export_log("Отчёт" if args.OutputFile.lower().endswith(".erf") else "Обработка",
+                           os.path.basename(args.OutputFile), args.OutputFile,
+                           "epf-build", args.SourceFile)
         elif out_missing:
             print(f"Error: exit code 0 but no non-empty file at {args.OutputFile} — build produced no output")
         else:

@@ -25,6 +25,57 @@ def die(msg, code=1):
     sys.exit(code)
 
 
+AGENTS_TEMPLATE = """# Проект разработки 1С%s
+
+## Что здесь
+
+Исходники расширения и рабочие каталоги проекта. Истина о коде и метаданных — в XML
+проекта; база, платформа и данные — за настройками проекта.
+
+## Настройки
+
+- База по умолчанию: `%s`
+- Реестр проекта: `.v8-project.json` в корне; общий реестр: `%s\\.v8-project.json` (только чтение)
+- Сборки: `build\\`; чек-листы: `checks\\current.md`
+- Журнал выгрузок и сборок: `EXPORTS.md`
+
+## Как работаю
+
+1. **Сначала навык.** Операции с конфигурацией, базами, формами, отчётами, обработками
+   выполняю навыками из `~/.dsh/skills`; навыка нет — по образцу и говорю об этом.
+2. **Долгие операции — в фон:** `db-*`, `cf-*`, `cfe-*`, `epf-*`, `web-*` запускаю через
+   `pwsh` с `run_in_background` и `CC_SYNC=1`; дальше job id и `job_output`.
+3. **Выгрузки фиксируются в `EXPORTS.md`.** Перед новой выгрузкой смотрю журнал —
+   возможно, работа уже лежит в проекте и повторять её не нужно.
+4. **Готово — значит проверено.** Называю, чем проверял; что не смог — говорю прямо.
+
+## Жёсткие правила
+
+1. API платформы проверяю до кода (метод, свойство, конструктор, перечисление).
+2. Метаданные правлю навыком (`meta-*`, `form-*`, `role-*`); руками в XML — только
+   когда навыка нет, по образцу соседнего объекта и с предупреждением.
+3. Значения не выдумываю: база, пользователь, платформа, каталоги — из `.v8-project.json`.
+4. Операции, меняющие базу (`db-load-*`, `db-update`), — только по явной задаче;
+   перед полной загрузкой конфигурации запрашиваю подтверждение.
+5. Пароли в ответ, лог и коммит не попадают.
+6. `_store` — только чтение; публикация сборок — шаг человека.
+"""
+
+
+def write_agents_md(project_dir, db_ref, name="", store=DEFAULT_STORE):
+    """Создаёт AGENTS.md с правилами проекта, если файла ещё нет."""
+    path = os.path.join(project_dir, "AGENTS.md")
+    if os.path.isfile(path):
+        print("  AGENTS.md:   уже есть, не перезаписываю")
+        return path
+    title = (": " + name) if name else ""
+    text = AGENTS_TEMPLATE % (title, db_ref, store)
+    with open(path, "w", encoding="utf-8", newline="\n") as f:
+        f.write(text)
+    print("  AGENTS.md:   " + path)
+    return path
+
+
 def ci_parse_args(parser, argv=None):
     argv = list(sys.argv[1:] if argv is None else argv)
     names = {s.lower(): s for a in parser._actions for s in a.option_strings}
@@ -252,6 +303,8 @@ def main():
                 f.write("# Чек-лист проекта\n\n"
                         "Добавьте пункты проверки после определения доработки.\n")
 
+        write_agents_md(project_dir, db_ref, "", store)
+
         print("Проектная среда подготовлена без создания расширения:")
         print("  Папка:        " + project_dir)
         print("  База:         " + db_ref)
@@ -408,6 +461,8 @@ def main():
                     "- [ ] Форма/обработка открывается без ошибок\n"
                     "- [ ] Проверяемый сценарий работает\n"
                     "- [ ] В журнале регистрации нет ошибок\n" % (args.Name, args.Version, db_ref))
+
+    write_agents_md(project_dir, db_ref, args.Name, store)
 
     scaffold_from = ""
     other_layout = os.path.join(project_dir, "src", args.Name)

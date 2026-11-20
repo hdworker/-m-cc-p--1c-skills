@@ -17,6 +17,23 @@ if (_cc_os.path.basename(_cc_os.path.abspath(__file__)) == _cc_os.path.basename(
         _cc_sys.stderr.write(_cc_r.stderr or "")
         _cc_sys.exit(0)
 # --- end cc-async ---
+
+
+def _cc_export_log(kind, name, target, operation, source=""):
+    """Запись в EXPORTS.md проекта (журнал выгрузок и сборок)."""
+    try:
+        import subprocess as _sp
+        _helper = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(
+            os.path.abspath(__file__)))), "_shared", "export_log.py")
+        if not os.path.isfile(_helper):
+            return
+        _cmd = [sys.executable, _helper, "add", "--kind", kind, "--name", name,
+                "--target", target, "--operation", operation]
+        if source:
+            _cmd += ["--source", source]
+        _sp.run(_cmd, check=False, capture_output=True, text=True, timeout=30)
+    except Exception:
+        pass
 # db-dump-cf v1.23 — Dump 1C configuration to CF file
 # Source: https://github.com/Nikolay-Shirokov/cc-1c-skills
 
@@ -667,6 +684,9 @@ def main():
             exit_code = 1
         if exit_code == 0:
             print(f"Configuration dumped successfully to: {args.OutputFile}")
+            _cc_export_log("CFE" if args.Extension else "CF",
+                           os.path.basename(args.OutputFile), args.OutputFile,
+                           "db-dump-cf", args.Extension or args.InfoBaseRef)
         elif out_missing:
             print(f"Error: exit code 0 but no non-empty file at {args.OutputFile} — configuration was not dumped")
         else:
@@ -717,6 +737,9 @@ def main():
             exit_code = 1
         if exit_code == 0:
             print(f"Configuration dumped successfully to: {args.OutputFile}")
+            _cc_export_log("CFE" if args.Extension else "CF",
+                           os.path.basename(args.OutputFile), args.OutputFile,
+                           "db-dump-cf", args.Extension or args.InfoBaseRef)
         elif out_missing:
             print(f"Error: exit code 0 but no non-empty file at {args.OutputFile} — configuration was not dumped")
         else:

@@ -26,6 +26,10 @@ python "$env:USERPROFILE\.dsh\skills\db-dump-cf\scripts\db-dump-cf.py" — ба�
 Если файла нет — предложи `db-list add`.
 Если использованная база не зарегистрирована — после выполнения предложи добавить через `db-list add`.
 
+## Авторизация информационной базы
+
+До вызова установи переменные окружения `ONEC_USER` и `ONEC_PWD`. Авторизация ИБ берётся только из этих переменных; CLI-параметры, `.v8-project.json` и хранилище учётных данных как запасной источник не используются.
+
 ## Команда
 
 ```powershell
@@ -40,8 +44,6 @@ python "$env:USERPROFILE\.dsh\skills\db-dump-cf/scripts/db-dump-cf.py" <пара
 | `-InfoBasePath <путь>` | * | Файловая база |
 | `-InfoBaseServer <сервер>` | * | Сервер 1С (для серверной базы) |
 | `-InfoBaseRef <имя>` | * | Имя базы на сервере |
-| `-UserName <имя>` | нет | Имя пользователя |
-| `-Password <пароль>` | нет | Пароль |
 | `-OutputFile <путь>` | да | Путь к выходному CF-файлу |
 | `-Extension <имя>` | нет | Выгрузить расширение |
 | `-AllExtensions` | нет | Выгрузить все расширения |
@@ -54,13 +56,13 @@ python "$env:USERPROFILE\.dsh\skills\db-dump-cf/scripts/db-dump-cf.py" <пара
 
 ```powershell
 # Выгрузка конфигурации (файловая база)
-python "$env:USERPROFILE\.dsh\skills\db-dump-cf/scripts/db-dump-cf.py" -InfoBasePath "C:\Bases\MyDB" -UserName "Admin" -OutputFile "C:\backup\config.cf"
+python "$env:USERPROFILE\.dsh\skills\db-dump-cf/scripts/db-dump-cf.py" -InfoBasePath "C:\Bases\MyDB" -OutputFile "C:\backup\config.cf"
 
 # Серверная база
-python "$env:USERPROFILE\.dsh\skills\db-dump-cf/scripts/db-dump-cf.py" -InfoBaseServer "srv01" -InfoBaseRef "MyApp_Dev" -UserName "Admin" -Password "secret" -OutputFile "config.cf"
+python "$env:USERPROFILE\.dsh\skills\db-dump-cf/scripts/db-dump-cf.py" -InfoBaseServer "srv01" -InfoBaseRef "MyApp_Dev" -OutputFile "config.cf"
 
 # Выгрузка расширения
-python "$env:USERPROFILE\.dsh\skills\db-dump-cf/scripts/db-dump-cf.py" -InfoBasePath "C:\Bases\MyDB" -UserName "Admin" -OutputFile "ext.cfe" -Extension "МоёРасширение"
+python "$env:USERPROFILE\.dsh\skills\db-dump-cf/scripts/db-dump-cf.py" -InfoBasePath "C:\Bases\MyDB" -OutputFile "ext.cfe" -Extension "МоёРасширение"
 ```
 
 ## Запуск в DSH — без ожидания оболочки

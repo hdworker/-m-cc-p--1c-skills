@@ -65,9 +65,9 @@ python "$env:USERPROFILE\.dsh\skills\db-repo\scripts\db-repo.py" update [databas
 
 Платформа — `v8path` найденной записи базы, иначе корневой `v8path`. Не задан ни там, ни там — `-V8Path` не передавай.
 
-Реквизиты хранилища передавать не нужно: запись базы находится по переданным параметрам
-соединения (`-InfoBasePath` либо `-InfoBaseServer` + `-InfoBaseRef`), реквизиты берутся из её
-`repository`. Задать их явно можно параметрами `-Repository*`.
+Авторизация информационной базы использует только переменные окружения `ONEC_USER` и `ONEC_PWD`, которые нужно установить до вызова. CLI-параметры, `.v8-project.json` и хранилище учётных данных не являются источником или запасным вариантом для авторизации ИБ.
+
+Авторизация хранилища конфигурации — отдельная: реквизиты берутся из `repository.user`/`repository.password` найденной записи базы. Их также можно передать явно через `-RepositoryUser` и `-RepositoryPassword`; они не заменяют `ONEC_USER`/`ONEC_PWD`.
 
 ## Команда
 
@@ -91,8 +91,6 @@ python "$env:USERPROFILE\.dsh\skills\db-repo/scripts/db-repo.py" -Command <по�
 | `-InfoBasePath <путь>` | * | Файловая база |
 | `-InfoBaseServer <сервер>` | * | Сервер 1С |
 | `-InfoBaseRef <имя>` | * | Имя базы на сервере |
-| `-UserName <имя>` | нет | Пользователь базы |
-| `-Password <пароль>` | нет | Пароль пользователя базы |
 | `-Objects <список>` | усл. | Объекты через запятую. Для `lock`, `unlock`, `commit` обязателен, если не задан `-All` |
 | `-ObjectsFile <путь>` | нет | Файл со списком объектов, одно имя на строку |
 | `-All` | нет | Операция над всей конфигурацией — вместо `-Objects`, а не вместе с ним |
@@ -185,7 +183,7 @@ python "$env:USERPROFILE\.dsh\skills\db-repo/scripts/db-repo.py" -Command commit
 python "$env:USERPROFILE\.dsh\skills\db-repo/scripts/db-repo.py" -Command update -InfoBasePath "C:\Bases\MyDB"
 
 # Серверная база, расширение
-python "$env:USERPROFILE\.dsh\skills\db-repo/scripts/db-repo.py" -Command lock -InfoBaseServer "srv01" -InfoBaseRef "MyApp_Dev" -UserName "Admin" -Extension "МоёРасширение" -Objects "Справочник.Номенклатура"
+python "$env:USERPROFILE\.dsh\skills\db-repo/scripts/db-repo.py" -Command lock -InfoBaseServer "srv01" -InfoBaseRef "MyApp_Dev" -Extension "МоёРасширение" -Objects "Справочник.Номенклатура"
 ```
 
 ## После выполнения

@@ -54,11 +54,14 @@ AGENTS_TEMPLATE = """# Проект разработки 1С%s
 1. API платформы проверяю до кода (метод, свойство, конструктор, перечисление).
 2. Метаданные правлю навыком (`meta-*`, `form-*`, `role-*`); руками в XML — только
    когда навыка нет, по образцу соседнего объекта и с предупреждением.
-3. Значения не выдумываю: база, пользователь, платформа, каталоги — из `.v8-project.json`.
-4. Операции, меняющие базу (`db-load-*`, `db-update`), — только по явной задаче;
+3. Значения не выдумываю: база, платформа, каталоги — из `.v8-project.json`.
+4. Логин и пароль информационной базы всегда беру только из `ONEC_USER` и `ONEC_PWD`;
+   значения `databases[].user/password` и CLI-параметры для входа не использую.
+5. Операции, меняющие базу (`db-load-*`, `db-update`), — только по явной задаче;
    перед полной загрузкой конфигурации запрашиваю подтверждение.
-5. Пароли в ответ, лог и коммит не попадают.
-6. `_store` — только чтение; публикация сборок — шаг человека.
+6. Пароли в ответ, лог и коммит не попадают. Учётные данные хранилища конфигурации
+   (`repository.user/password`) — отдельные от входа в информационную базу.
+7. `_store` — только чтение; публикация сборок — шаг человека.
 """
 
 
@@ -149,6 +152,14 @@ def sig(db):
     return "server:%s/%s" % (str(db.get("server", "")).lower(), str(db.get("ref", "")).lower())
 
 
+def without_infobase_credentials(db):
+    """Copy a database record without legacy infobase login fields."""
+    result = dict(db)
+    result.pop("user", None)
+    result.pop("password", None)
+    return result
+
+
 def merged_project(existing, registry, databases, db_ref, project_dir, name, src_dir, build_dir):
     """Дополнить существующий .v8-project.json, не меняя заданные значения."""
     project = dict(existing)
@@ -158,7 +169,7 @@ def merged_project(existing, registry, databases, db_ref, project_dir, name, src
     merged = list(project.get("databases") or [])
     for db in databases:
         if str(db.get("ref", "")).lower() not in have:
-            merged.append(db)
+            merged.append(without_infobase_credentials(db))
     project["databases"] = merged
     if not project.get("default"):
         project["default"] = db_ref
@@ -283,7 +294,7 @@ def main():
         os.makedirs(checks_dir, exist_ok=True)
         project = {
             "v8path": registry.get("v8path", ""),
-            "databases": databases,
+            "databases": [without_infobase_credentials(db) for db in databases],
             "default": db_ref,
             "check": {
                 "database": db_ref,
@@ -438,7 +449,7 @@ def main():
     else:
         project = {
             "v8path": registry.get("v8path", ""),
-            "databases": databases,
+            "databases": [without_infobase_credentials(db) for db in databases],
             "default": db_ref,
             "check": {
                 "database": db_ref,

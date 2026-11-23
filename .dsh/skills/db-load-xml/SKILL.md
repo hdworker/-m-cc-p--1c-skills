@@ -30,6 +30,10 @@ python "$env:USERPROFILE\.dsh\skills\db-load-xml\scripts\db-load-xml.py" src/con
 Если в записи базы указан `configSrc` — используй как каталог загрузки по умолчанию.
 Для `-Extension` каталог берётся из `extensions[].src` записи базы, если он там указан.
 
+## Авторизация информационной базы
+
+До вызова установи переменные окружения `ONEC_USER` и `ONEC_PWD`. Авторизация ИБ берётся только из этих переменных; CLI-параметры, `.v8-project.json` и хранилище учётных данных как запасной источник не используются.
+
 ## Команда
 
 ```powershell
@@ -44,8 +48,6 @@ python "$env:USERPROFILE\.dsh\skills\db-load-xml/scripts/db-load-xml.py" <пар
 | `-InfoBasePath <путь>` | * | Файловая база |
 | `-InfoBaseServer <сервер>` | * | Сервер 1С (для серверной базы) |
 | `-InfoBaseRef <имя>` | * | Имя базы на сервере |
-| `-UserName <имя>` | нет | Имя пользователя |
-| `-Password <пароль>` | нет | Пароль |
 | `-ConfigDir <путь>` | да | Каталог XML-исходников |
 | `-Mode <режим>` | нет | `Full` (по умолч.) / `Partial` |
 | `-Files <список>` | для Partial | Относительные пути файлов через запятую |
@@ -88,16 +90,16 @@ Documents/Заказ/Forms/ФормаДокумента.xml
 
 ```powershell
 # Полная загрузка
-python "$env:USERPROFILE\.dsh\skills\db-load-xml/scripts/db-load-xml.py" -V8Path "C:\Program Files\1cv8\8.3.25.1257\bin" -InfoBasePath "C:\Bases\MyDB" -UserName "Admin" -ConfigDir "C:\WS\cfsrc" -Mode Full
+python "$env:USERPROFILE\.dsh\skills\db-load-xml/scripts/db-load-xml.py" -V8Path "C:\Program Files\1cv8\8.3.25.1257\bin" -InfoBasePath "C:\Bases\MyDB" -ConfigDir "C:\WS\cfsrc" -Mode Full
 
 # Частичная загрузка конкретных файлов
-python "$env:USERPROFILE\.dsh\skills\db-load-xml/scripts/db-load-xml.py" -InfoBasePath "C:\Bases\MyDB" -UserName "Admin" -ConfigDir "C:\WS\cfsrc" -Mode Partial -Files "Catalogs/Номенклатура.xml,Catalogs/Номенклатура/Ext/ObjectModule.bsl"
+python "$env:USERPROFILE\.dsh\skills\db-load-xml/scripts/db-load-xml.py" -InfoBasePath "C:\Bases\MyDB" -ConfigDir "C:\WS\cfsrc" -Mode Partial -Files "Catalogs/Номенклатура.xml,Catalogs/Номенклатура/Ext/ObjectModule.bsl"
 
 # Загрузка расширения
-python "$env:USERPROFILE\.dsh\skills\db-load-xml/scripts/db-load-xml.py" -InfoBasePath "C:\Bases\MyDB" -UserName "Admin" -ConfigDir "C:\WS\ext_src" -Mode Full -Extension "МоёРасширение"
+python "$env:USERPROFILE\.dsh\skills\db-load-xml/scripts/db-load-xml.py" -InfoBasePath "C:\Bases\MyDB" -ConfigDir "C:\WS\ext_src" -Mode Full -Extension "МоёРасширение"
 
 # Загрузка + обновление БД в одном запуске
-python "$env:USERPROFILE\.dsh\skills\db-load-xml/scripts/db-load-xml.py" -InfoBasePath "C:\Bases\MyDB" -UserName "Admin" -ConfigDir "C:\WS\cfsrc" -Mode Full -UpdateDB
+python "$env:USERPROFILE\.dsh\skills\db-load-xml/scripts/db-load-xml.py" -InfoBasePath "C:\Bases\MyDB" -ConfigDir "C:\WS\cfsrc" -Mode Full -UpdateDB
 ```
 
 ## Запуск в DSH — без ожидания оболочки

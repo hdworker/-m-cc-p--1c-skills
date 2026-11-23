@@ -29,16 +29,19 @@ description: Инициализация нового проекта 1С или �
 В режиме `-ProjectOnly` создаются `.v8-project.json`, `build\`, `checks\current.md`
 и `AGENTS.md` с правилами проекта (если файла ещё нет — существующий не перезаписывается).
 исходники расширений не создаются и не изменяются. `check.url` остаётся пустым до определения задачи.
+Новые реестры проекта не содержат логин/пароль информационной базы; операции 1С
+используют только `ONEC_USER` и `ONEC_PWD` из окружения. Учётные данные хранилища
+конфигурации (`repository.user/password`) — отдельные.
 
 ## Команда
 
 ```bash
 # Только подготовить пустой проект; имя расширения можно выбрать позже.
-python "C:\Users\Grishin1c\.config\opencode\skills\1c-init\scripts\1c-init.py" ^
+python "$env:USERPROFILE\.dsh\skills\1c-init\scripts\1c-init.py" ^
   -ProjectDir "E:\Grishin\Code\НовыйПроект" -ProjectOnly
 
 # Создать расширение сразу.
-python "C:\Users\Grishin1c\.config\opencode\skills\1c-init\scripts\1c-init.py" ^
+python "$env:USERPROFILE\.dsh\skills\1c-init\scripts\1c-init.py" ^
   -ProjectDir "E:\Grishin\Code\НовыйПроект" -Name "БКК_НовоеРасширение" -NamePrefix "бкк_"
 ```
 
@@ -56,7 +59,7 @@ python "C:\Users\Grishin1c\.config\opencode\skills\1c-init\scripts\1c-init.py" ^
 | `-Database <ref>` | нет | принудительно выбрать базу |
 | `-StoreDir <путь>` | нет | стора (по умолчанию `E:\Grishin\Code\_store`) |
 | `-NoScaffold` | нет | не создавать заготовку расширения |
-| `-DryRun` | нет | только показать план, ничего не создавать |
+| `-DryRun` | нет | предпросмотр плана; проект не создан и инициализация не считается выполненной |
 | `-Force` | нет | дополнить существующий `.v8-project.json` с резервной копией / разрешить занятую базу |
 
 ### Добавить расширение позже
@@ -64,7 +67,7 @@ python "C:\Users\Grishin1c\.config\opencode\skills\1c-init\scripts\1c-init.py" ^
 После `-ProjectOnly` расширение можно создать в той же папке командой:
 
 ```bash
-python "C:\Users\Grishin1c\.config\opencode\skills\1c-init\scripts\1c-init.py" ^
+python "$env:USERPROFILE\.dsh\skills\1c-init\scripts\1c-init.py" ^
   -ProjectDir "E:\Grishin\Code\НовыйПроект" -Name "БКК_НовоеРасширение" -Force
 ```
 

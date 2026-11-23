@@ -25,9 +25,14 @@ python "$env:USERPROFILE\.dsh\skills\erf-dump\scripts\erf-dump.py" <ErfFile> [Ou
 3. Если указал базу по имени — ищи по id / alias / name в `.v8-project.json`
 4. Если не указал — сопоставь текущую ветку Git с `databases[].branches`
 5. Если ветка не совпала — используй `default`
-6. Если `.v8-project.json` нет или база не найдена — **сообщи пользователю об ошибке**. Для dump база обязательна: в пустой базе ссылочные типы (CatalogRef, DocumentRef и т.д.) безвозвратно сбрасываются в строки. Предложи указать базу или зарегистрировать через `db-list add`.
+6. Если `.v8-project.json` нет и пользователь рассчитывает на настройки проекта — запроси подтверждение на инициализацию через `1c-init -ProjectOnly`; не подменяй это командой `db-list add`. Если реестр уже есть, но база не зарегистрирована — попроси разрешение добавить базу через `db-list add`. Явно переданные параметры подключения можно использовать напрямую.
+
+Для dump база обязательна: в пустой базе ссылочные типы (CatalogRef, DocumentRef и т.д.) безвозвратно сбрасываются в строки.
 
 Платформа — `v8path` найденной записи базы, иначе корневой `v8path`. Не задан ни там, ни там — `-V8Path` не передавай.
+Аутентификация информационной базы всегда берётся только из `ONEC_USER` и `ONEC_PWD`
+окружения; CLI и `databases[].user/password` не являются источниками. Пустой пароль
+допустим, если `ONEC_PWD` задан явно. Не запрашивай и не выводи значения секретов.
 Если использованная база не зарегистрирована — после выполнения предложи добавить через `db-list add`.
 
 ## Команда
@@ -46,8 +51,6 @@ python "$env:USERPROFILE\.dsh\skills\epf-dump/scripts/epf-dump.py" <параме
 | `-InfoBasePath <путь>` | * | Файловая база |
 | `-InfoBaseServer <сервер>` | * | Сервер 1С (для серверной базы) |
 | `-InfoBaseRef <имя>` | * | Имя базы на сервере |
-| `-UserName <имя>` | нет | Имя пользователя |
-| `-Password <пароль>` | нет | Пароль |
 | `-InputFile <путь>` | да | Путь к ERF-файлу |
 | `-OutputDir <путь>` | да | Каталог для выгрузки исходников |
 | `-Format <формат>` | нет | `Hierarchical` (по умолч.) / `Plain` |
@@ -63,5 +66,5 @@ python "$env:USERPROFILE\.dsh\skills\epf-dump/scripts/epf-dump.py" <параме
 python "$env:USERPROFILE\.dsh\skills\epf-dump/scripts/epf-dump.py" -InfoBasePath "C:\Bases\MyDB" -InputFile "build/МойОтчёт.erf" -OutputDir "src"
 
 # Серверная база
-python "$env:USERPROFILE\.dsh\skills\epf-dump/scripts/epf-dump.py" -InfoBaseServer "srv01" -InfoBaseRef "MyDB" -UserName "Admin" -Password "secret" -InputFile "build/МойОтчёт.erf" -OutputDir "src"
+python "$env:USERPROFILE\.dsh\skills\epf-dump/scripts/epf-dump.py" -InfoBaseServer "srv01" -InfoBaseRef "MyDB" -InputFile "build/МойОтчёт.erf" -OutputDir "src"
 ```

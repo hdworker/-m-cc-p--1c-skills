@@ -35,6 +35,11 @@ import re
 import shutil
 import subprocess
 import sys
+
+_onec_shared_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "_shared"))
+sys.path.insert(0, _onec_shared_dir)
+from onec_credentials import apply_onec_credentials
+
 import tempfile
 import time
 import urllib.request
@@ -259,6 +264,7 @@ def main():
     parser.add_argument('-Port', type=int, default=8081, help='Port (default: 8081)')
     parser.add_argument('-Manual', action='store_true', help='Do not download Apache — only check and give instructions')
     args = ci_parse_args(parser)
+    apply_onec_credentials(args)
     args.InfoBasePath = clean_path(args.InfoBasePath, "-InfoBasePath")
     args.InfoBasePath = resolve_infobase_path(args.InfoBasePath)
 

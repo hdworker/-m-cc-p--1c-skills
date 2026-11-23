@@ -24,13 +24,16 @@ python "$env:USERPROFILE\.dsh\skills\web-publish\scripts\web-publish.py" dev --p
 3. Если не указал — сопоставь текущую ветку Git с `databases[].branches`
 4. Если ветка не совпала — используй `default`
 
-**ОБЯЗАТЕЛЬНО передавай все найденные параметры:**
+**Передавай найденные параметры публикации:**
 - **`-V8Path`** — `v8path` найденной записи базы, иначе корневой `v8path`. Не задан ни там, ни там — не передавай, но версия платформы тогда выберется автоматически и может оказаться не той
-- **`-UserName`** — из поля `user` найденной записи базы (если есть)
-- **`-Password`** — из поля `password` найденной записи базы (если есть)
 - **`-ApachePath`** — из `webPath` в `.v8-project.json` (если есть)
 
+
 Если файла `.v8-project.json` нет — предложи `db-list add`.
+
+## Авторизация информационной базы
+
+До вызова установи переменные окружения `ONEC_USER` и `ONEC_PWD`. Авторизация ИБ берётся только из этих переменных; CLI-параметры и значения `user`/`password` из `.v8-project.json` не используются как источник или запасной вариант.
 
 ## Команда
 
@@ -46,8 +49,6 @@ python "$env:USERPROFILE\.dsh\skills\web-publish/scripts/web-publish.py" <пар
 | `-InfoBasePath <путь>` | * | Файловая база |
 | `-InfoBaseServer <сервер>` | * | Сервер 1С (для серверной базы) |
 | `-InfoBaseRef <имя>` | * | Имя базы на сервере |
-| `-UserName <имя>` | нет | Имя пользователя |
-| `-Password <пароль>` | нет | Пароль |
 | `-AppName <имя>` | нет | Имя публикации (по умолчанию из имени каталога базы) |
 | `-ApachePath <путь>` | нет | Корень Apache (по умолчанию `tools/apache24`) |
 | `-Port <порт>` | нет | Порт (по умолчанию `8081`) |
@@ -58,7 +59,7 @@ python "$env:USERPROFILE\.dsh\skills\web-publish/scripts/web-publish.py" <пар
 ## Несколько пользователей одной базы
 
 Повторный вызов с тем же AppName **заменяет** публикацию (идемпотентность). Это используется для:
-- смены пользователя: «опубликуй под Ивановым» → тот же AppName, новый `-UserName`
+- смены пользователя ИБ: установи соответствующие `ONEC_USER` и `ONEC_PWD` в окружении до вызова
 - перезапуска после `web-stop`: тот же вызов поднимает Apache обратно
 
 Если пользователь просит **параллельную** публикацию под другим пользователем (для тестирования разных наборов прав), добавь суффикс к AppName:
@@ -86,13 +87,13 @@ python "$env:USERPROFILE\.dsh\skills\web-publish/scripts/web-publish.py" <пар
 
 ```powershell
 # Файловая база
-python "$env:USERPROFILE\.dsh\skills\web-publish/scripts/web-publish.py" -InfoBasePath "C:\Bases\MyDB" -UserName "Admin"
+python "$env:USERPROFILE\.dsh\skills\web-publish/scripts/web-publish.py" -InfoBasePath "C:\Bases\MyDB"
 
 # С явным именем публикации и портом
 python "$env:USERPROFILE\.dsh\skills\web-publish/scripts/web-publish.py" -InfoBasePath "C:\Bases\MyDB" -AppName "mydb" -Port 9090
 
 # Серверная база
-python "$env:USERPROFILE\.dsh\skills\web-publish/scripts/web-publish.py" -InfoBaseServer "srv01" -InfoBaseRef "MyDB" -UserName "Admin" -Password "secret"
+python "$env:USERPROFILE\.dsh\skills\web-publish/scripts/web-publish.py" -InfoBaseServer "srv01" -InfoBaseRef "MyDB"
 
 # Ручной режим (только инструкция)
 python "$env:USERPROFILE\.dsh\skills\web-publish/scripts/web-publish.py" -InfoBasePath "C:\Bases\MyDB" -Manual

@@ -32,6 +32,10 @@ python "$env:USERPROFILE\.dsh\skills\epf-build\scripts\epf-build.py" <ProcessorN
 Платформа — `v8path` найденной записи базы, иначе корневой `v8path`. Не задан ни там, ни там — `-V8Path` не передавай.
 Если использованная база не зарегистрирована — после выполнения предложи добавить через `db-list add`.
 
+## Авторизация информационной базы
+
+Если передаёшь подключение к существующей ИБ, до вызова установи `ONEC_USER` и `ONEC_PWD` в окружении. Авторизация ИБ берётся только из них; CLI-параметры, `.v8-project.json` и хранилище учётных данных как запасной источник не используются. Для автоматически создаваемой временной базы учётные данные не задаются.
+
 ## Команда
 
 ```powershell
@@ -46,8 +50,6 @@ python "$env:USERPROFILE\.dsh\skills\epf-build/scripts/epf-build.py" <парам
 | `-InfoBasePath <путь>` | * | Файловая база |
 | `-InfoBaseServer <сервер>` | * | Сервер 1С (для серверной базы) |
 | `-InfoBaseRef <имя>` | * | Имя базы на сервере |
-| `-UserName <имя>` | нет | Имя пользователя |
-| `-Password <пароль>` | нет | Пароль |
 | `-SourceFile <путь>` | да | Путь к корневому XML-файлу исходников |
 | `-OutputFile <путь>` | да | Путь к выходному EPF/ERF-файлу |
 | `-Checks <список>` | нет | Что проверить перед сборкой: `modules`, `handlers`, `unreferenced`, `empty-handlers`, `config`; `off` — не проверять. По умолчанию `modules,handlers` |
@@ -77,7 +79,7 @@ python "$env:USERPROFILE\.dsh\skills\epf-build/scripts/epf-build.py" <парам
 python "$env:USERPROFILE\.dsh\skills\epf-build/scripts/epf-build.py" -InfoBasePath "C:\Bases\MyDB" -SourceFile "src/МояОбработка.xml" -OutputFile "build/МояОбработка.epf"
 
 # Серверная база
-python "$env:USERPROFILE\.dsh\skills\epf-build/scripts/epf-build.py" -InfoBaseServer "srv01" -InfoBaseRef "MyDB" -UserName "Admin" -Password "secret" -SourceFile "src/МояОбработка.xml" -OutputFile "build/МояОбработка.epf"
+python "$env:USERPROFILE\.dsh\skills\epf-build/scripts/epf-build.py" -InfoBaseServer "srv01" -InfoBaseRef "MyDB" -SourceFile "src/МояОбработка.xml" -OutputFile "build/МояОбработка.epf"
 ```
 
 ## Запуск в DSH — без ожидания оболочки

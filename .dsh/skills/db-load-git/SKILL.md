@@ -33,6 +33,10 @@ python "$env:USERPROFILE\.dsh\skills\db-load-git\scripts\db-load-git.py" dev -Dr
 Если использованная база не зарегистрирована — после выполнения предложи добавить через `db-list add`.
 Если в записи базы указан `configSrc` — используй как каталог конфигурации.
 
+## Авторизация информационной базы
+
+До вызова установи переменные окружения `ONEC_USER` и `ONEC_PWD`. Авторизация ИБ берётся только из этих переменных; CLI-параметры, `.v8-project.json` и хранилище учётных данных как запасной источник не используются.
+
 ## Команда
 
 ```powershell
@@ -47,8 +51,6 @@ python "$env:USERPROFILE\.dsh\skills\db-load-git/scripts/db-load-git.py" <пар
 | `-InfoBasePath <путь>` | * | Файловая база |
 | `-InfoBaseServer <сервер>` | * | Сервер 1С (для серверной базы) |
 | `-InfoBaseRef <имя>` | * | Имя базы на сервере |
-| `-UserName <имя>` | нет | Имя пользователя |
-| `-Password <пароль>` | нет | Пароль |
 | `-ConfigDir <путь>` | да | Каталог XML-выгрузки (git-репозиторий) |
 | `-Source <источник>` | нет | `All` (по умолч.) / `Staged` / `Unstaged` / `Commit` |
 | `-CommitRange <range>` | для Commit | Диапазон коммитов (напр. `HEAD~3..HEAD`) |

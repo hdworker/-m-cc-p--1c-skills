@@ -28,6 +28,10 @@ python "$env:USERPROFILE\.dsh\skills\db-update\scripts\db-update.py" dev -Dynami
 Если файла нет — предложи `db-list add`.
 Если использованная база не зарегистрирована — после выполнения предложи добавить через `db-list add`.
 
+## Авторизация информационной базы
+
+До вызова установи переменные окружения `ONEC_USER` и `ONEC_PWD`. Авторизация ИБ берётся только из этих переменных; CLI-параметры, `.v8-project.json` и хранилище учётных данных как запасной источник не используются.
+
 ## Команда
 
 ```powershell
@@ -42,8 +46,6 @@ python "$env:USERPROFILE\.dsh\skills\db-update/scripts/db-update.py" <парам
 | `-InfoBasePath <путь>` | * | Файловая база |
 | `-InfoBaseServer <сервер>` | * | Сервер 1С (для серверной базы) |
 | `-InfoBaseRef <имя>` | * | Имя базы на сервере |
-| `-UserName <имя>` | нет | Имя пользователя |
-| `-Password <пароль>` | нет | Пароль |
 | `-Extension <имя>` | нет | Обновить расширение |
 | `-AllExtensions` | нет | Обновить все расширения |
 | `-NoApplyCheck` | нет | Не проверять применимость расширения после обновления |
@@ -69,13 +71,13 @@ python "$env:USERPROFILE\.dsh\skills\db-update/scripts/db-update.py" <парам
 
 ```powershell
 # Обычное обновление (файловая база)
-python "$env:USERPROFILE\.dsh\skills\db-update/scripts/db-update.py" -InfoBasePath "C:\Bases\MyDB" -UserName "Admin"
+python "$env:USERPROFILE\.dsh\skills\db-update/scripts/db-update.py" -InfoBasePath "C:\Bases\MyDB"
 
 # Динамическое обновление
-python "$env:USERPROFILE\.dsh\skills\db-update/scripts/db-update.py" -InfoBaseServer "srv01" -InfoBaseRef "MyDB" -UserName "Admin" -Password "secret" -Dynamic on
+python "$env:USERPROFILE\.dsh\skills\db-update/scripts/db-update.py" -InfoBaseServer "srv01" -InfoBaseRef "MyDB" -Dynamic on
 
 # Обновление расширения
-python "$env:USERPROFILE\.dsh\skills\db-update/scripts/db-update.py" -InfoBasePath "C:\Bases\MyDB" -UserName "Admin" -Extension "МоёРасширение"
+python "$env:USERPROFILE\.dsh\skills\db-update/scripts/db-update.py" -InfoBasePath "C:\Bases\MyDB" -Extension "МоёРасширение"
 ```
 
 ## Запуск в DSH — без ожидания оболочки

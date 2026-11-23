@@ -30,6 +30,9 @@ python "$env:USERPROFILE\.dsh\skills\erf-build\scripts\erf-build.py" <ReportName
 6. Если `.v8-project.json` нет или база не найдена — не указывай параметры подключения: скрипт автоматически создаст временную базу. Для ERF со ссылочными типами (CatalogRef, DocumentRef и т.д.) генерируются заглушки метаданных. Временная база удаляется после сборки.
 
 Платформа — `v8path` найденной записи базы, иначе корневой `v8path`. Не задан ни там, ни там — `-V8Path` не передавай.
+При работе с информационной базой авторизация всегда берётся только из `ONEC_USER` и
+`ONEC_PWD` окружения; CLI и поля `databases[].user/password` не используются. Пустой
+пароль допустим, если `ONEC_PWD` задан явно. Реквизиты хранилища конфигурации отдельные.
 Если использованная база не зарегистрирована — после выполнения предложи добавить через `db-list add`.
 
 ## Команда
@@ -48,8 +51,6 @@ python "$env:USERPROFILE\.dsh\skills\epf-build/scripts/epf-build.py" <парам
 | `-InfoBasePath <путь>` | * | Файловая база |
 | `-InfoBaseServer <сервер>` | * | Сервер 1С (для серверной базы) |
 | `-InfoBaseRef <имя>` | * | Имя базы на сервере |
-| `-UserName <имя>` | нет | Имя пользователя |
-| `-Password <пароль>` | нет | Пароль |
 | `-SourceFile <путь>` | да | Путь к корневому XML-файлу исходников |
 | `-OutputFile <путь>` | да | Путь к выходному ERF-файлу |
 | `-Checks <список>` | нет | Что проверить перед сборкой: `modules`, `handlers`, `unreferenced`, `empty-handlers`, `config`; `off` — не проверять. По умолчанию `modules,handlers` |
@@ -79,5 +80,5 @@ python "$env:USERPROFILE\.dsh\skills\epf-build/scripts/epf-build.py" <парам
 python "$env:USERPROFILE\.dsh\skills\epf-build/scripts/epf-build.py" -InfoBasePath "C:\Bases\MyDB" -SourceFile "src/МойОтчёт.xml" -OutputFile "build/МойОтчёт.erf"
 
 # Серверная база
-python "$env:USERPROFILE\.dsh\skills\epf-build/scripts/epf-build.py" -InfoBaseServer "srv01" -InfoBaseRef "MyDB" -UserName "Admin" -Password "secret" -SourceFile "src/МойОтчёт.xml" -OutputFile "build/МойОтчёт.erf"
+python "$env:USERPROFILE\.dsh\skills\epf-build/scripts/epf-build.py" -InfoBaseServer "srv01" -InfoBaseRef "MyDB" -SourceFile "src/МойОтчёт.xml" -OutputFile "build/МойОтчёт.erf"
 ```

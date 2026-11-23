@@ -11,6 +11,9 @@ import sys
 from datetime import datetime
 
 SKILLS_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, os.path.join(SKILLS_DIR, "_shared"))
+from onec_credentials import require_onec_credentials
+
 DB_RUN = os.path.join(SKILLS_DIR, "db-run", "scripts", "db-run.py")
 CFE_ADMIN = os.path.join(SKILLS_DIR, "db-cfe-admin", "scripts", "db-cfe-admin.py")
 
@@ -209,6 +212,12 @@ def main():
         print("ОШИБКА: в .v8-project.json нет ни одной базы.")
         return 1
 
+    try:
+        require_onec_credentials()
+    except ValueError as exc:
+        print("ОШИБКА: " + str(exc))
+        return 1
+
     check_config = project.get("check") or {}
     build = check_config.get("build") or {}
 
@@ -360,9 +369,7 @@ def main():
 
         if args.Deep and ext_name:
             base_args = ["-InfoBaseServer", str(db.get("server", "")),
-                         "-InfoBaseRef", str(db.get("ref", "")),
-                         "-UserName", str(db.get("user", "")),
-                         "-Password", str(db.get("password", ""))]
+                         "-InfoBaseRef", str(db.get("ref", ""))]
             rc, out = run_admin(base_args + ["-Command", "check", "-Checks", "apply"])
             low = out.lower()
             if rc == 0 and "ошиб" not in low and "error" not in low and "fail" not in low:
@@ -415,10 +422,6 @@ def main():
     run_args = [sys.executable, "-u", DB_RUN,
                 "-InfoBaseServer", str(db.get("server", "")),
                 "-InfoBaseRef", str(db.get("ref", ""))]
-    if db.get("user"):
-        run_args += ["-UserName", str(db["user"])]
-    if db.get("password"):
-        run_args += ["-Password", str(db["password"])]
     if url:
         run_args += ["-URL", url]
     if args.CParam:

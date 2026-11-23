@@ -27,6 +27,10 @@ python "$env:USERPROFILE\.dsh\skills\db-run\scripts\db-run.py" dev /C "пара�
 Если файла нет — предложи `db-list add`.
 Если использованная база не зарегистрирована — после выполнения предложи добавить через `db-list add`.
 
+## Авторизация информационной базы
+
+До вызова установи переменные окружения `ONEC_USER` и `ONEC_PWD`. Авторизация ИБ берётся только из этих переменных; CLI-параметры, `.v8-project.json` и хранилище учётных данных как запасной источник не используются.
+
 ## Команда
 
 ```powershell
@@ -41,8 +45,6 @@ python "$env:USERPROFILE\.dsh\skills\db-run/scripts/db-run.py" <параметр
 | `-InfoBasePath <путь>` | * | Файловая база |
 | `-InfoBaseServer <сервер>` | * | Сервер 1С (для серверной базы) |
 | `-InfoBaseRef <имя>` | * | Имя базы на сервере |
-| `-UserName <имя>` | нет | Имя пользователя |
-| `-Password <пароль>` | нет | Пароль |
 | `-Execute <файл.epf>` | нет | Запуск внешней обработки сразу после старта |
 | `-CParam <строка>` | нет | Параметр запуска (/C) |
 | `-URL <ссылка>` | нет | Навигационная ссылка (формат `e1cib/...`) |
@@ -58,16 +60,16 @@ python "$env:USERPROFILE\.dsh\skills\db-run/scripts/db-run.py" <параметр
 
 ```powershell
 # Простой запуск
-python "$env:USERPROFILE\.dsh\skills\db-run/scripts/db-run.py" -InfoBasePath "C:\Bases\MyDB" -UserName "Admin"
+python "$env:USERPROFILE\.dsh\skills\db-run/scripts/db-run.py" -InfoBasePath "C:\Bases\MyDB"
 
 # Запуск с обработкой
-python "$env:USERPROFILE\.dsh\skills\db-run/scripts/db-run.py" -InfoBasePath "C:\Bases\MyDB" -UserName "Admin" -Execute "C:\epf\МояОбработка.epf"
+python "$env:USERPROFILE\.dsh\skills\db-run/scripts/db-run.py" -InfoBasePath "C:\Bases\MyDB" -Execute "C:\epf\МояОбработка.epf"
 
 # Открыть по навигационной ссылке
-python "$env:USERPROFILE\.dsh\skills\db-run/scripts/db-run.py" -InfoBasePath "C:\Bases\MyDB" -UserName "Admin" -URL "e1cib/data/Справочник.Номенклатура"
+python "$env:USERPROFILE\.dsh\skills\db-run/scripts/db-run.py" -InfoBasePath "C:\Bases\MyDB" -URL "e1cib/data/Справочник.Номенклатура"
 
 # Серверная база с параметром запуска
-python "$env:USERPROFILE\.dsh\skills\db-run/scripts/db-run.py" -InfoBaseServer "srv01" -InfoBaseRef "MyDB" -UserName "Admin" -Password "secret" -CParam "ЗапуститьОбновление"
+python "$env:USERPROFILE\.dsh\skills\db-run/scripts/db-run.py" -InfoBaseServer "srv01" -InfoBaseRef "MyDB" -CParam "ЗапуститьОбновление"
 ```
 
 ## Запуск в DSH — без ожидания оболочки

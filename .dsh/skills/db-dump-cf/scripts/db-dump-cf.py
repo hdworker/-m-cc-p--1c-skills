@@ -47,6 +47,11 @@ import re
 import shutil
 import subprocess
 import sys
+
+_onec_shared_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "_shared"))
+sys.path.insert(0, _onec_shared_dir)
+from onec_credentials import apply_onec_credentials
+
 import tempfile
 import threading
 import time
@@ -622,6 +627,7 @@ def main():
     known_opts = {s.lower() for a in parser._actions for s in a.option_strings}
     argv, v8_extra, ibcmd_extra = extract_extra_args(sys.argv[1:], known_opts)
     args = ci_parse_args(parser, argv)
+    apply_onec_credentials(args)
 
     args.V8Path = clean_path(args.V8Path, "-V8Path")
     args.InfoBasePath = clean_path(args.InfoBasePath, "-InfoBasePath")

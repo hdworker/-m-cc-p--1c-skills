@@ -27,6 +27,10 @@ python "$env:USERPROFILE\.dsh\skills\db-load-cf\scripts\db-load-cf.py" config.cf
 Если файла нет — предложи `db-list add`.
 Если использованная база не зарегистрирована — после выполнения предложи добавить через `db-list add`.
 
+## Авторизация информационной базы
+
+До вызова установи переменные окружения `ONEC_USER` и `ONEC_PWD`. Авторизация ИБ берётся только из этих переменных; CLI-параметры, `.v8-project.json` и хранилище учётных данных как запасной источник не используются.
+
 ## Команда
 
 ```powershell
@@ -41,8 +45,6 @@ python "$env:USERPROFILE\.dsh\skills\db-load-cf/scripts/db-load-cf.py" <пара
 | `-InfoBasePath <путь>` | * | Файловая база |
 | `-InfoBaseServer <сервер>` | * | Сервер 1С (для серверной базы) |
 | `-InfoBaseRef <имя>` | * | Имя базы на сервере |
-| `-UserName <имя>` | нет | Имя пользователя |
-| `-Password <пароль>` | нет | Пароль |
 | `-InputFile <путь>` | да | Путь к CF-файлу |
 | `-Extension <имя>` | нет | Загрузить как расширение |
 | `-NoApplyCheck` | нет | Не проверять применимость расширения после загрузки |
@@ -60,13 +62,13 @@ python "$env:USERPROFILE\.dsh\skills\db-load-cf/scripts/db-load-cf.py" <пара
 
 ```powershell
 # Файловая база
-python "$env:USERPROFILE\.dsh\skills\db-load-cf/scripts/db-load-cf.py" -InfoBasePath "C:\Bases\MyDB" -UserName "Admin" -InputFile "C:\backup\config.cf"
+python "$env:USERPROFILE\.dsh\skills\db-load-cf/scripts/db-load-cf.py" -InfoBasePath "C:\Bases\MyDB" -InputFile "C:\backup\config.cf"
 
 # Серверная база
-python "$env:USERPROFILE\.dsh\skills\db-load-cf/scripts/db-load-cf.py" -InfoBaseServer "srv01" -InfoBaseRef "MyApp_Test" -UserName "Admin" -Password "secret" -InputFile "config.cf"
+python "$env:USERPROFILE\.dsh\skills\db-load-cf/scripts/db-load-cf.py" -InfoBaseServer "srv01" -InfoBaseRef "MyApp_Test" -InputFile "config.cf"
 
 # Загрузка расширения
-python "$env:USERPROFILE\.dsh\skills\db-load-cf/scripts/db-load-cf.py" -InfoBasePath "C:\Bases\MyDB" -UserName "Admin" -InputFile "ext.cfe" -Extension "МоёРасширение"
+python "$env:USERPROFILE\.dsh\skills\db-load-cf/scripts/db-load-cf.py" -InfoBasePath "C:\Bases\MyDB" -InputFile "ext.cfe" -Extension "МоёРасширение"
 ```
 
 ## Запуск в DSH — без ожидания оболочки

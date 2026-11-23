@@ -29,6 +29,10 @@ python "$env:USERPROFILE\.dsh\skills\db-dump-xml\scripts\db-dump-xml.py" dev src
 Если в записи базы указан `configSrc` — используй как каталог выгрузки по умолчанию.
 Для `-Extension` каталог берётся из `extensions[].src` записи базы, если он там указан.
 
+## Авторизация информационной базы
+
+До вызова установи переменные окружения `ONEC_USER` и `ONEC_PWD`. Авторизация ИБ берётся только из этих переменных; CLI-параметры, `.v8-project.json` и хранилище учётных данных как запасной источник не используются.
+
 ## Команда
 
 ```powershell
@@ -43,8 +47,6 @@ python "$env:USERPROFILE\.dsh\skills\db-dump-xml/scripts/db-dump-xml.py" <пар
 | `-InfoBasePath <путь>` | * | Файловая база |
 | `-InfoBaseServer <сервер>` | * | Сервер 1С (для серверной базы) |
 | `-InfoBaseRef <имя>` | * | Имя базы на сервере |
-| `-UserName <имя>` | нет | Имя пользователя |
-| `-Password <пароль>` | нет | Пароль |
 | `-ConfigDir <путь>` | да | Каталог для выгрузки |
 | `-Mode <режим>` | нет | `Full` / `Changes` (по умолч.) / `Partial` / `UpdateInfo` |
 | `-Objects <список>` | для Partial | Имена объектов через запятую |
@@ -75,19 +77,19 @@ python "$env:USERPROFILE\.dsh\skills\db-dump-xml/scripts/db-dump-xml.py" <пар
 
 ```powershell
 # Полная выгрузка (файловая база)
-python "$env:USERPROFILE\.dsh\skills\db-dump-xml/scripts/db-dump-xml.py" -V8Path "C:\Program Files\1cv8\8.3.25.1257\bin" -InfoBasePath "C:\Bases\MyDB" -UserName "Admin" -ConfigDir "C:\WS\cfsrc" -Mode Full
+python "$env:USERPROFILE\.dsh\skills\db-dump-xml/scripts/db-dump-xml.py" -V8Path "C:\Program Files\1cv8\8.3.25.1257\bin" -InfoBasePath "C:\Bases\MyDB" -ConfigDir "C:\WS\cfsrc" -Mode Full
 
 # Инкрементальная выгрузка
-python "$env:USERPROFILE\.dsh\skills\db-dump-xml/scripts/db-dump-xml.py" -InfoBasePath "C:\Bases\MyDB" -UserName "Admin" -ConfigDir "C:\WS\cfsrc" -Mode Changes
+python "$env:USERPROFILE\.dsh\skills\db-dump-xml/scripts/db-dump-xml.py" -InfoBasePath "C:\Bases\MyDB" -ConfigDir "C:\WS\cfsrc" -Mode Changes
 
 # Частичная выгрузка
-python "$env:USERPROFILE\.dsh\skills\db-dump-xml/scripts/db-dump-xml.py" -InfoBasePath "C:\Bases\MyDB" -UserName "Admin" -ConfigDir "C:\WS\cfsrc" -Mode Partial -Objects "Справочник.Номенклатура,Документ.Заказ"
+python "$env:USERPROFILE\.dsh\skills\db-dump-xml/scripts/db-dump-xml.py" -InfoBasePath "C:\Bases\MyDB" -ConfigDir "C:\WS\cfsrc" -Mode Partial -Objects "Справочник.Номенклатура,Документ.Заказ"
 
 # Серверная база
-python "$env:USERPROFILE\.dsh\skills\db-dump-xml/scripts/db-dump-xml.py" -InfoBaseServer "srv01" -InfoBaseRef "MyApp_Dev" -UserName "Admin" -Password "secret" -ConfigDir "C:\WS\cfsrc" -Mode Full
+python "$env:USERPROFILE\.dsh\skills\db-dump-xml/scripts/db-dump-xml.py" -InfoBaseServer "srv01" -InfoBaseRef "MyApp_Dev" -ConfigDir "C:\WS\cfsrc" -Mode Full
 
 # Выгрузка расширения
-python "$env:USERPROFILE\.dsh\skills\db-dump-xml/scripts/db-dump-xml.py" -InfoBasePath "C:\Bases\MyDB" -UserName "Admin" -ConfigDir "C:\WS\ext_src" -Mode Full -Extension "МоёРасширение"
+python "$env:USERPROFILE\.dsh\skills\db-dump-xml/scripts/db-dump-xml.py" -InfoBasePath "C:\Bases\MyDB" -ConfigDir "C:\WS\ext_src" -Mode Full -Extension "МоёРасширение"
 ```
 
 ## Запуск в DSH — без ожидания оболочки

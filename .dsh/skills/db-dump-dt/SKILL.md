@@ -29,6 +29,10 @@ python "$env:USERPROFILE\.dsh\skills\db-dump-dt\scripts\db-dump-dt.py" — ба�
 Если файла нет — предложи `db-list add`.
 Если использованная база не зарегистрирована — после выполнения предложи добавить через `db-list add`.
 
+## Авторизация информационной базы
+
+До вызова установи переменные окружения `ONEC_USER` и `ONEC_PWD`. Авторизация ИБ берётся только из этих переменных; CLI-параметры, `.v8-project.json` и хранилище учётных данных как запасной источник не используются.
+
 ## Команда
 
 ```powershell
@@ -43,8 +47,6 @@ python "$env:USERPROFILE\.dsh\skills\db-dump-dt/scripts/db-dump-dt.py" <пара
 | `-InfoBasePath <путь>` | * | Файловая база |
 | `-InfoBaseServer <сервер>` | * | Сервер 1С (для серверной базы) |
 | `-InfoBaseRef <имя>` | * | Имя базы на сервере |
-| `-UserName <имя>` | нет | Имя пользователя |
-| `-Password <пароль>` | нет | Пароль |
 | `-OutputFile <путь>` | да | Путь к выходному DT-файлу |
 | `-AdditionalV8Arguments <список>` | нет | Доп. аргументы запуска `1cv8.exe` через запятую, напр. `/UseHwLicenses+` |
 | `-AdditionalIbcmdArguments <список>` | нет | Доп. аргументы `ibcmd` через запятую, в форме `--ключ=значение` |
@@ -55,10 +57,10 @@ python "$env:USERPROFILE\.dsh\skills\db-dump-dt/scripts/db-dump-dt.py" <пара
 
 ```powershell
 # Выгрузка ИБ (файловая база)
-python "$env:USERPROFILE\.dsh\skills\db-dump-dt/scripts/db-dump-dt.py" -InfoBasePath "C:\Bases\MyDB" -UserName "Admin" -OutputFile "C:\backup\base.dt"
+python "$env:USERPROFILE\.dsh\skills\db-dump-dt/scripts/db-dump-dt.py" -InfoBasePath "C:\Bases\MyDB" -OutputFile "C:\backup\base.dt"
 
 # Серверная база
-python "$env:USERPROFILE\.dsh\skills\db-dump-dt/scripts/db-dump-dt.py" -InfoBaseServer "srv01" -InfoBaseRef "MyApp_Dev" -UserName "Admin" -Password "secret" -OutputFile "base.dt"
+python "$env:USERPROFILE\.dsh\skills\db-dump-dt/scripts/db-dump-dt.py" -InfoBaseServer "srv01" -InfoBaseRef "MyApp_Dev" -OutputFile "base.dt"
 ```
 
 ## Связанные навыки

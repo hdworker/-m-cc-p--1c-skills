@@ -6,8 +6,6 @@
       "name": "Разработка",
       "type": "file",
       "path": "C:\\Bases\\MyApp_Dev",
-      "user": "Администратор",
-      "password": "",
       "aliases": [
         "dev",
         "разработка"
@@ -42,8 +40,6 @@
       "type": "server",
       "server": "srv01",
       "ref": "MyApp_Test",
-      "user": "Администратор",
-      "password": "",
       "aliases": [
         "test",
         "тест",

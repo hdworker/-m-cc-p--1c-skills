@@ -42,6 +42,10 @@ python "$env:USERPROFILE\.dsh\skills\db-load-dt\scripts\db-load-dt.py" backup.dt
 Если файла нет — предложи `db-list add`.
 Если использованная база не зарегистрирована — после выполнения предложи добавить через `db-list add`.
 
+## Авторизация информационной базы
+
+До вызова установи переменные окружения `ONEC_USER` и `ONEC_PWD`. Авторизация ИБ берётся только из этих переменных; CLI-параметры, `.v8-project.json` и хранилище учётных данных как запасной источник не используются.
+
 ## Команда
 
 ```powershell
@@ -56,8 +60,6 @@ python "$env:USERPROFILE\.dsh\skills\db-load-dt/scripts/db-load-dt.py" <пара
 | `-InfoBasePath <путь>` | * | Файловая база |
 | `-InfoBaseServer <сервер>` | * | Сервер 1С (для серверной базы) |
 | `-InfoBaseRef <имя>` | * | Имя базы на сервере |
-| `-UserName <имя>` | нет | Имя пользователя |
-| `-Password <пароль>` | нет | Пароль |
 | `-InputFile <путь>` | да | Путь к DT-файлу |
 | `-JobsCount <N>` | нет | Число фоновых заданий загрузки (0 = по числу процессоров) |
 | `-UnlockCode <код>` | нет | Код разблокировки (`/UC`), если заблокировано начало сеансов |
@@ -75,10 +77,10 @@ python "$env:USERPROFILE\.dsh\skills\db-load-dt/scripts/db-load-dt.py" <пара
 
 ```powershell
 # Файловая база
-python "$env:USERPROFILE\.dsh\skills\db-load-dt/scripts/db-load-dt.py" -InfoBasePath "C:\Bases\MyDB" -UserName "Admin" -InputFile "C:\backup\base.dt"
+python "$env:USERPROFILE\.dsh\skills\db-load-dt/scripts/db-load-dt.py" -InfoBasePath "C:\Bases\MyDB" -InputFile "C:\backup\base.dt"
 
 # Серверная база с ускорением загрузки
-python "$env:USERPROFILE\.dsh\skills\db-load-dt/scripts/db-load-dt.py" -InfoBaseServer "srv01" -InfoBaseRef "MyApp_Test" -UserName "Admin" -Password "secret" -InputFile "base.dt" -JobsCount 4
+python "$env:USERPROFILE\.dsh\skills\db-load-dt/scripts/db-load-dt.py" -InfoBaseServer "srv01" -InfoBaseRef "MyApp_Test" -InputFile "base.dt" -JobsCount 4
 ```
 
 ## Связанные навыки
